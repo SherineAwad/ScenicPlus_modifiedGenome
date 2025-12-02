@@ -17,6 +17,8 @@ This workflow describes how to adapt **cisTarget** to a **modified genome** for 
 
 The resulting **custom cisTarget database** can then be used in **Scenic+** to perform **gene regulatory network inference** specifically for the modified genome `neurog2_S9A`.  
 
+All steps are automated and reproducible using the [Makefile](https://github.com/SherineAwad/ScenicPlus_modifiedGenome/blob/master/Makefile).
+
 
 
 
