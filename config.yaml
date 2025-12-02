@@ -1,0 +1,15 @@
+# Input files
+ctrl_fragments: "TH1_atac_fragments.tsv.gz"
+trt_fragments: "TH2_atac_fragments.tsv.gz"
+chrom_sizes: "neurog2.chrom.sizes"
+
+# Labels
+ctrl_name: "Control"
+trt_name: "KO"
+
+# Output
+out_dir: "scenicOuts"
+
+# Resources
+n_cpu: 4
+
