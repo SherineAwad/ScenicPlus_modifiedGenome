@@ -1,4 +1,6 @@
 #https://scenicplus.readthedocs.io/en/latest/human_cerebellum_ctx_db.html
+g:
+	awk '/^>/ {next} {n+=length($0)} END {print n}' neurog2.fa
 ####Creating cistarget DB
 create_cisTarget_databases:
 	git clone https://github.com/aertslab/create_cisTarget_databases
@@ -46,5 +48,6 @@ neurog2_cistarget: neurog2.with_1kb_bg_padding.fa aertslab_motif_colleciton/v10n
 	-m motifs.txt \
 	-o  neurog2_cistarget \
 	--bgpadding 1000 \
- 	-t 20
-
+	-t 12 \
+	-c /nfs/turbo/umms-thahoang/sherine/mScenicP/cluster-buster-master/cbust
+	

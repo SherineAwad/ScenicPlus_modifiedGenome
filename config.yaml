@@ -5,11 +5,20 @@ chrom_sizes: "neurog2.chrom.sizes"
 
 # Labels
 ctrl_name: "Control"
-trt_name: "KO"
+trt_name: "OE"
 
 # Output
 out_dir: "scenicOuts"
 
 # Resources
 n_cpu: 4
+
+#size of the modified genome
+g: 2730873821
+
+
+#consensus 
+combined_bed: "all_combined.bed"
+consensus_bed: "final_consensus.bed" 
+
 
