@@ -6,6 +6,10 @@ ctrl_fragments: "TH1_atac_fragments.tsv.gz"
 trt_fragments: "TH2_atac_fragments.tsv.gz"
 chrom_sizes: "neurog2.chrom.sizes"
 
+samples:
+  - TH1
+  - TH2
+
 # Labels
 ctrl_name: "Control"
 trt_name: "OE"
@@ -19,7 +23,7 @@ qc_cmd: "pycistopic_qc_commands.sh"
 minTSS: 0.1
 minFrag: 200
 minFrip: 0.0
-
+blacklist: "mm10-blacklist.v2.bed"
 
 # Output
 out_dir: "scenicOuts"

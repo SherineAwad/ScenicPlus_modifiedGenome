@@ -9,9 +9,18 @@ rule all:
         config['out_dir'] + "/QC/" + config['modified_tss_bed'],
         config['qc_cmd'],
         config['out_dir'] + "/fragments_dict.pkl",
-        "done.txt",
+        expand("{sample}.cbs_for_otsu_thresholds.tsv", sample=config["samples"]),
+        expand("{sample}.fragments_stats_per_cb_for_otsu_thresholds.parquet", sample=config["samples"]),
+        expand("{sample}.fragments_stats_per_cb_for_otsu_thresholds.tsv", sample=config["samples"]),
+        expand("{sample}.fragments_stats_per_cb.parquet", sample=config["samples"]),
+        expand("{sample}.fragments_insert_size_dist.parquet", sample=config["samples"]),
+        expand("{sample}.otsu_thresholds.tsv", sample=config["samples"]),
+        expand("{sample}.tss_norm_matrix_per_cb.parquet", sample=config["samples"]),
+        expand("{sample}.tss_norm_matrix_sample.parquet", sample=config["samples"]),
+        expand("{sample}.pycistopic_qc.log", sample=config["samples"]),
         config['out_dir'] + "/QC/qc_barcodes_thresholds.pkl",
-        config['out_dir'] ++ "/QC/qc_barcodes_thresholds.pkl"
+        config['out_dir'] + "/QC/qc_barcodes_thresholds.pkl", 
+        config['out_dir'] + "/cistopic_objects_mm10.pkl", 
 
 rule pseudobulk:
     output:
@@ -20,13 +29,13 @@ rule pseudobulk:
     shell:
         """
         python pseudobulk.py \
-            --ctrl_fragments {config[ctrl_fragments]} \
-            --trt_fragments {config[trt_fragments]} \
-            --chrom_sizes {config[chrom_sizes]} \
-            --ctrl_name {config[ctrl_name]} \
-            --trt_name {config[trt_name]} \
-            --out_dir {config[out_dir]} \
-            --n_cpu {config[n_cpu]} \
+            --ctrl_fragments {config['ctrl_fragments']} \
+            --trt_fragments {config['trt_fragments']} \
+            --chrom_sizes {config['chrom_sizes']} \
+            --ctrl_name {config['ctrl_name']} \
+            --trt_name {config['trt_name']} \
+            --out_dir {config['out_dir']} \
+            --n_cpu {config['n_cpu']} \
             --normalize_bigwig \
             --temp_dir /tmp
         """
@@ -48,7 +57,7 @@ rule peak_calling:
 
 rule consensus_peaks:
     input:
-        directory(f"{config['out_dir']}/consensus_peak_calling/macs2_peaks")
+         f"{config['out_dir']}/consensus_peak_calling/macs2_peaks" 
     output:
         directory(f"{config['out_dir']}/consensus_peak_calling/consensus_peaks")
     params:
@@ -106,11 +115,18 @@ rule runQC:
     params:
         tss_bed=config['out_dir'] + "/QC/" + config['modified_tss_bed']
     output:
-        "done.txt"
+       expand("{sample}.cbs_for_otsu_thresholds.tsv", sample=config["samples"]),
+       expand("{sample}.fragments_stats_per_cb_for_otsu_thresholds.parquet", sample=config["samples"]),
+       expand("{sample}.fragments_stats_per_cb_for_otsu_thresholds.tsv", sample=config["samples"]),
+       expand("{sample}.fragments_stats_per_cb.parquet", sample=config["samples"]),
+       expand("{sample}.fragments_insert_size_dist.parquet", sample=config["samples"]),
+       expand("{sample}.otsu_thresholds.tsv", sample=config["samples"]),
+       expand("{sample}.tss_norm_matrix_per_cb.parquet", sample=config["samples"]),
+       expand("{sample}.tss_norm_matrix_sample.parquet", sample=config["samples"]),
+       expand("{sample}.pycistopic_qc.log", sample=config["samples"])
     shell:
         """
         bash {input}
-        touch {output}
         """
 
 
@@ -144,7 +160,7 @@ rule plotQC:
      params:
            qc_dir= config['out_dir'] + "/QC/",
      output: 
-         config['out_dir'] ++ "/QC/qc_barcodes_thresholds.pkl"
+         config['out_dir'] + "/QC/qc_barcodes_thresholds.pkl"
      shell: 
         """  
         python plot_pycistopicQC.py \
@@ -153,4 +169,28 @@ rule plotQC:
            --plots_output_dir {params.qc_dir} \
            --qc_results_pickle {output} \
            --barcode_plots_output_dir {params.qc_dir}
-     """ 
+     """
+
+
+rule create_cisObject: 
+     input:
+        config['out_dir'] + "/fragments_dict.pkl",
+        config['out_dir'] + "/QC/qc_barcodes_thresholds.pkl",
+     params: 
+         blacklist = config['blacklist'],
+         qc_dir= config['out_dir'] + "/QC/",
+         regions_bed = config['out_dir'] + "/consensus_peak_calling/consensus_peaks",
+         nCPUs = config['n_cpu']
+     output: 
+         config['out_dir'] + "/cistopic_objects_mm10.pkl"
+     shell: 
+          """ 
+          python create_cistopic_objects.py \
+          --fragments_dict {input[0]} \
+          --qc_results_pickle {input[1]} \
+          --regions_bed {params.regions_bed} \
+          --blacklist_bed {params.blacklist} \
+          --qc_output_dir {params.qc_dir}\
+          --output_pickle {output} \
+          --n_cpu {params.nCPUs}
+       """ 

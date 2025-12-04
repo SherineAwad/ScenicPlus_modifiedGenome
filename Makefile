@@ -50,4 +50,12 @@ neurog2_cistarget: neurog2.with_1kb_bg_padding.fa aertslab_motif_colleciton/v10n
 	--bgpadding 1000 \
 	-t 12 \
 	-c /nfs/turbo/umms-thahoang/sherine/mScenicP/cluster-buster-master/cbust
-	
+
+
+#----------------------------------------------------
+##Downloadig some needed resource
+
+mm10-blacklist.v2.bed:
+	wget https://www.encodeproject.org/files/ENCFF547MET/@@download/ENCFF547MET.bed.gz
+	gunzip ENCFF547MET.bed.gz
+	mv ENCFF547MET.bed mm10-blacklist.v2.bed
