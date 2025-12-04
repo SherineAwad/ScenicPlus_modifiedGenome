@@ -8,7 +8,7 @@ rule all:
 	f"{config['out_dir']}/consensus_peak_calling/consensus_peaks",
         config['out_dir'] + "/QC/" + config['modified_tss_bed'],
 	config['qc_cmd'], 
-
+        "done.txt"
 rule pseudobulk:
     output:
         bed_paths = f"{config['out_dir']}/consensus_peak_calling/bed_paths.tsv",
@@ -75,7 +75,7 @@ rule gtf_to_tss:
 
 
 
-rule runQC: 
+rule prepQC: 
     input:
           config['out_dir'] + "/QC/" + config['modified_tss_bed'] 
     params: 
@@ -86,12 +86,28 @@ rule runQC:
          config['qc_cmd']
     shell: 
       """
-      python run_qc.py \
+      python prepQC.py \
        --out_dir {params.outdir} \
        --consensus_dir  {params.outdir}/consensus_peak_calling/consensus_peaks \
        --tss_bed {input} \
        --th1_fragments {params.control} \
        --th2_fragments {params.treatment} \
        --qc_commands_filename {output} 
-      """ 
-        
+      """
+
+rule runQC:
+    input:
+        config['qc_cmd']
+    params:
+        tss_bed=config['out_dir'] + "/QC/" + config['modified_tss_bed']
+    output:
+        "done.txt"
+    shell:
+        """
+        tmp_file=$(mktemp)
+        echo -e "# Chromosome\tstart\tend\tgene_name\tscore\tstrand" | cat - {params.tss_bed} > $tmp_file
+        mv $tmp_file {params.tss_bed}
+        bash {input}
+        touch {output}
+        """
+ 

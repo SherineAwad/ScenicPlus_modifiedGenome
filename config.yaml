@@ -12,7 +12,7 @@ trt_name: "OE"
 
 
 #extras 
-qc_cmd: "pycistopic_qc_commands.txt"
+qc_cmd: "pycistopic_qc_commands.sh"
 # Output
 out_dir: "scenicOuts"
 
