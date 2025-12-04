@@ -1,3 +1,6 @@
+modified_genome: "neurog2.fa"
+modified_gtf: "neurog2.gtf"
+modified_tss_bed: "neurog2_tss.bed" 
 # Input files
 ctrl_fragments: "TH1_atac_fragments.tsv.gz"
 trt_fragments: "TH2_atac_fragments.tsv.gz"
@@ -7,6 +10,9 @@ chrom_sizes: "neurog2.chrom.sizes"
 ctrl_name: "Control"
 trt_name: "OE"
 
+
+#extras 
+qc_cmd: "pycistopic_qc_commands.txt"
 # Output
 out_dir: "scenicOuts"
 

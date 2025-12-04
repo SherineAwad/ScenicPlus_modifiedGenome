@@ -6,7 +6,8 @@ rule all:
         f"{config['out_dir']}/consensus_peak_calling/bw_paths.tsv",
 	f"{config['out_dir']}/consensus_peak_calling/macs2_peaks",
 	f"{config['out_dir']}/consensus_peak_calling/consensus_peaks",
-
+        config['out_dir'] + "/QC/" + config['modified_tss_bed'],
+	config['qc_cmd'], 
 
 rule pseudobulk:
     output:
@@ -59,3 +60,38 @@ rule consensus_peaks:
         """
 
 
+
+rule gtf_to_tss:
+    input:
+        config['modified_gtf']
+    output:
+        config['out_dir'] + "/QC/" + config['modified_tss_bed']
+    shell:
+        """
+        mkdir -p $(dirname {output})
+        bash gtf_to_tss.sh {input} {output}
+        """
+
+
+
+
+rule runQC: 
+    input:
+          config['out_dir'] + "/QC/" + config['modified_tss_bed'] 
+    params: 
+        control = config['ctrl_fragments'],
+        treatment = config['trt_fragments'],
+        outdir = config['out_dir'],
+    output:
+         config['qc_cmd']
+    shell: 
+      """
+      python run_qc.py \
+       --out_dir {params.outdir} \
+       --consensus_dir  {params.outdir}/consensus_peak_calling/consensus_peaks \
+       --tss_bed {input} \
+       --th1_fragments {params.control} \
+       --th2_fragments {params.treatment} \
+       --qc_commands_filename {output} 
+      """ 
+        
