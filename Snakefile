@@ -7,8 +7,12 @@ rule all:
 	f"{config['out_dir']}/consensus_peak_calling/macs2_peaks",
 	f"{config['out_dir']}/consensus_peak_calling/consensus_peaks",
         config['out_dir'] + "/QC/" + config['modified_tss_bed'],
-	config['qc_cmd'], 
-        "done.txt"
+        config['qc_cmd'],
+        config['out_dir'] + "/fragments_dict.pkl",
+        "done.txt",
+        config['out_dir'] + "/QC/qc_barcodes_thresholds.pkl",
+        config['out_dir'] ++ "/QC/qc_barcodes_thresholds.pkl"
+
 rule pseudobulk:
     output:
         bed_paths = f"{config['out_dir']}/consensus_peak_calling/bed_paths.tsv",
@@ -83,7 +87,8 @@ rule prepQC:
         treatment = config['trt_fragments'],
         outdir = config['out_dir'],
     output:
-         config['qc_cmd']
+         qc_cmd = config['qc_cmd'],
+         pkl = config['out_dir'] + "/fragments_dict.pkl",  
     shell: 
       """
       python prepQC.py \
@@ -92,7 +97,7 @@ rule prepQC:
        --tss_bed {input} \
        --th1_fragments {params.control} \
        --th2_fragments {params.treatment} \
-       --qc_commands_filename {output} 
+       --qc_commands_filename {output.qc_cmd} 
       """
 
 rule runQC:
@@ -104,10 +109,48 @@ rule runQC:
         "done.txt"
     shell:
         """
-        tmp_file=$(mktemp)
-        echo -e "# Chromosome\tstart\tend\tgene_name\tscore\tstrand" | cat - {params.tss_bed} > $tmp_file
-        mv $tmp_file {params.tss_bed}
         bash {input}
         touch {output}
         """
- 
+
+
+rule collect_barcodes: 
+         input: 
+           config['out_dir'] + "/fragments_dict.pkl",
+         params: 
+           qc_dir= config['out_dir'] + "/QC/", 
+           tss_cutoff = config['minTSS'],
+           min_frag = config['minFrag'],
+           min_frip = config['minFrip'] 
+         output: 
+            config['out_dir'] + "/QC/qc_barcodes_thresholds.pkl"
+         shell:
+            """
+               python collect_qc_barcodes.py \
+               --fragments_dict {input} \
+               --qc_output_dir {params.qc_dir} \
+               --output_pickle {output} \
+               --unique_fragments_threshold {params.tss_cutoff} \
+               --tss_enrichment_threshold {params.min_frag} \
+               --frip_threshold {params.min_frip}
+            """ 
+
+
+
+
+rule plotQC: 
+     input:
+           config['out_dir'] + "/fragments_dict.pkl",
+     params:
+           qc_dir= config['out_dir'] + "/QC/",
+     output: 
+         config['out_dir'] ++ "/QC/qc_barcodes_thresholds.pkl"
+     shell: 
+        """  
+        python plot_pycistopicQC.py \
+           --fragments_dict {input} \
+           --qc_output_dir {params.qc_dir} \
+           --plots_output_dir {params.qc_dir} \
+           --qc_results_pickle {output} \
+           --barcode_plots_output_dir {params.qc_dir}
+     """ 

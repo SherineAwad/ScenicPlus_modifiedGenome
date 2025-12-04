@@ -6,13 +6,9 @@ set -euo pipefail
 # Usage:
 #   ./gtf_to_tss.sh INPUT.gtf [OUTPUT.bed]
 #
-# Example:
-#   ./gtf_to_tss.sh neurog2.gtf neurog2_tss.bed
-#   ./gtf_to_tss.sh neurog2.gtf.gz        # -> neurog2_tss.bed (auto-named)
-#
 # Notes:
 # - Expects gene features in column 3 ($3 == "gene").
-# - BED fields: chrom, start(0-based), end(1-based), name(gene_name|gene_id|.), score(0), strand
+# - BED fields: # Chromosome, Start, End, Gene, Score, Strand, Transcript_type
 # - Output is sorted by chrom then start.
 
 if [[ $# -lt 1 || $# -gt 2 ]]; then
@@ -46,10 +42,6 @@ tmp="$(mktemp --suffix=.tss.tmp)"
 trap 'rm -f "$tmp"' EXIT
 
 # extract gene TSS lines and write unsorted tmp
-# - field sep = tab
-# - look for gene_name first, then gene_id, else '.' as name
-# - output: chrom start end name 0 strand
-# - convert 1-based TSS -> 0-based start, end = tss (so [start,end) covers the single base)
 $DECOMP "$INPUT" | awk 'BEGIN{FS="\t";OFS="\t"}
   $0 ~ /^#/ { next }           # skip headers
   $3 == "gene" {
@@ -66,12 +58,20 @@ $DECOMP "$INPUT" | awk 'BEGIN{FS="\t";OFS="\t"}
     } else if (match($0, /gene_id "([^"]+)"/, b)) {
       name = b[1]
     }
-    # print chromosome (col1), start(0-based), end(1-based), name, score, strand
-    print $1, start, end, name, 0, $7
+
+    # Add dummy Transcript_type column as NA
+    transcript_type = "NA"
+
+    # print headered line for Polars-compatible BED
+    print $1, start, end, name, 0, $7, transcript_type
   }' > "$tmp"
 
 # sort and uniq (keep unique lines); write to final output
-sort -k1,1 -k2,2n "$tmp" | uniq > "$OUTPUT"
+{
+  # print standard header
+  echo -e "# Chromosome\tStart\tEnd\tGene\tScore\tStrand\tTranscript_type"
+  sort -k1,1 -k2,2n "$tmp" | uniq
+} > "$OUTPUT"
 
 echo "Wrote TSS BED to: $OUTPUT"
 

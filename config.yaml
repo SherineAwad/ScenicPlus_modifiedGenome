@@ -11,8 +11,16 @@ ctrl_name: "Control"
 trt_name: "OE"
 
 
-#extras 
+#params 
 qc_cmd: "pycistopic_qc_commands.sh"
+
+#Thresholds
+
+minTSS: 0.1
+minFrag: 200
+minFrip: 0.0
+
+
 # Output
 out_dir: "scenicOuts"
 
