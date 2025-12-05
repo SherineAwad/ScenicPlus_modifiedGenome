@@ -18,6 +18,7 @@ annotations_file: "annotations.txt"
 #params 
 qc_cmd: "pycistopic_qc_commands.sh"
 
+MALLET_PATH: "/nfs/turbo/umms-thahoang/sherine/tools/Mallet-202108/bin/mallet"
 #Thresholds
 
 uniqFrag: 200

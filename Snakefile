@@ -26,7 +26,8 @@ rule all:
         f"clustered_{config['PROJ_NAME']}.h5ad", 
         f"annotated_clustered_{config['PROJ_NAME']}.h5ad", 
         config['RNA_Barcodes'], 
-
+        config['out_dir'] + "/merged_with_meta.pkl", 
+        MALLET = config['out_dir'] +"/MALLET", 
 rule pseudobulk:
     output:
         bed_paths = f"{config['out_dir']}/consensus_peak_calling/bed_paths.tsv",
@@ -242,4 +243,47 @@ rule barcodesRNA:
      shell: 
        """
        python src/barcodes_scRNA.py {input} {output} 
-       """  
+       """ 
+
+
+rule metaRNA: 
+    input: 
+       config['RNA_Barcodes'],
+       config['out_dir'] + "/merged_cistopic.pkl"
+    output: 
+       config['out_dir'] + "/merged_with_meta.pkl"
+    shell: 
+      """
+      python src/add_scrna_metadata.py \
+        --cistopic_pickle {input[1]} \
+        --scrna_csv {input[0]} \
+        --output_pickle {output}
+      """
+
+
+rule runMallet: 
+     input: 
+         config['out_dir'] + "/merged_with_meta.pkl"
+     params: 
+        tmp = config['out_dir'] +"/TMP",
+        MALLET_PATH = config['MALLET_PATH'],
+        nCPU = config['n_cpu'], 
+     output:
+        MALLET = config['out_dir'] +"/MALLET",
+     shell: 
+       """
+       python src/run_mallet.py \
+         --cistopic_obj_pickle {input} \
+         --mallet_path {params.MALLET_PATH} \
+         --n_topics 5 25 55 \
+         --n_cpu {params.nCPU} \
+         --n_iter 500 \
+         --tmp_path {params.tmp} \
+         --save_path {output} \
+         --mallet_memory 80G \
+         --random_state 555 \
+         --alpha 0.1 \
+         --alpha_by_topic \
+         --eta 0.01 \
+         --eta_by_topic
+     """ 
