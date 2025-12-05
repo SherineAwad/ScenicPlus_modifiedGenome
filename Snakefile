@@ -89,7 +89,7 @@ rule gtf_to_tss:
     shell:
         """
         mkdir -p $(dirname {output})
-        bash gtf_to_tss.sh {input} {output}
+        bash src/gtf_to_tss.sh {input} {output}
         """
 
 
