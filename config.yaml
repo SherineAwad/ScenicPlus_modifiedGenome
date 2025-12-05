@@ -5,16 +5,16 @@ modified_tss_bed: "neurog2_tss.bed"
 ctrl_fragments: "TH1_atac_fragments.tsv.gz"
 trt_fragments: "TH2_atac_fragments.tsv.gz"
 chrom_sizes: "neurog2.chrom.sizes"
-
 samples:
   - TH1
   - TH2
-
+samples_file: "samples.tsv" 
 # Labels
 ctrl_name: "Control"
 trt_name: "OE"
-
-
+PROJ_NAME: "Neurog2"
+RNA_Barcodes: "scRNA_barcodes.csv"
+annotations_file: "annotations.txt"
 #params 
 qc_cmd: "pycistopic_qc_commands.sh"
 
@@ -34,9 +34,10 @@ n_cpu: 8
 #size of the modified genome
 g: 2730873821
 
+#Marker Genes
+markers: "mouse_markers.txt"
 
 #consensus 
 combined_bed: "all_combined.bed"
 consensus_bed: "final_consensus.bed" 
-
 

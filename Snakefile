@@ -21,7 +21,11 @@ rule all:
         expand("scenicOuts/QC/{sample}.pycistopic_qc.log", sample=config["samples"]),
         config['out_dir'] + "/QC/qc_barcodes_thresholds.pkl",
         config['out_dir'] + "/cistopic_objects_mm10.pkl", 
-        config['out_dir'] + "/merged_cistopic.pkl"
+        config['out_dir'] + "/merged_cistopic.pkl",
+        f"{config['PROJ_NAME']}.h5ad",
+        f"clustered_{config['PROJ_NAME']}.h5ad", 
+        f"annotated_clustered_{config['PROJ_NAME']}.h5ad", 
+        config['RNA_Barcodes'], 
 
 rule pseudobulk:
     output:
@@ -76,8 +80,8 @@ rule consensus_peaks:
         python src/consensus_peaks.py \
             -i {input} \
             -o {output} \
-            -c {params.combined_bed} \
-            -p {params.consensus_bed}
+            -c {output.combined_bed} \
+            -p {output.consensus_bed}
         """
 
 
@@ -195,5 +199,47 @@ rule mergeCisObj:
      shell: 
          """python src/merge_cistopic.py {input} {output}"""
 
+rule prepRNA: 
+    input:  
+       expand("{sample}_filtered_feature_bc_matrix.h5", sample=config["samples"])
+    params: 
+       samples_file = config['samples_file'],
+       project = config['PROJ_NAME'] 
+    output: 
+        f"{config['PROJ_NAME']}.h5ad"
+    shell: 
+         """python src/preprocess_scRNA.py {params.project} {params.samples_file}"""
 
- 
+
+rule clusterRNA: 
+     input: 
+        f"{config['PROJ_NAME']}.h5ad"
+     params: 
+        markers = config['markers']
+     output: 
+        f"clustered_{config['PROJ_NAME']}.h5ad"
+     shell: 
+        """
+        python src/cluster_scRNA.py {input} {params.markers}
+        """  
+
+rule annotateRNA:
+     input: 
+       f"clustered_{config['PROJ_NAME']}.h5ad"
+     output: 
+       f"annotated_clustered_{config['PROJ_NAME']}.h5ad"
+     params: 
+         config['annotations_file'] 
+     shell: 
+         """ 
+         python src/annotate_scRNA.py {input} {params} 
+         """ 
+rule barcodesRNA: 
+     input: 
+         f"annotated_clustered_{config['PROJ_NAME']}.h5ad"
+     output:
+        config['RNA_Barcodes']
+     shell: 
+       """
+       python src/barcodes_scRNA.py {input} {output} 
+       """  
