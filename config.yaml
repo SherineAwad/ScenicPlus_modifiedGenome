@@ -20,8 +20,8 @@ qc_cmd: "pycistopic_qc_commands.sh"
 
 #Thresholds
 
+uniqFrag: 200
 minTSS: 0.1
-minFrag: 200
 minFrip: 0.0
 blacklist: "mm10-blacklist.v2.bed"
 
@@ -29,7 +29,7 @@ blacklist: "mm10-blacklist.v2.bed"
 out_dir: "scenicOuts"
 
 # Resources
-n_cpu: 4
+n_cpu: 8
 
 #size of the modified genome
 g: 2730873821
