@@ -22,6 +22,25 @@ All steps are automated and reproducible using the [Makefile](https://github.com
 
 # scRNA preprocessing 
 
+##### Filtering 
+```
+combined_adata = combined_adata[
+    (combined_adata.obs['n_genes_by_counts'] > 200) &    # keep cells with at least 200 genes
+    (combined_adata.obs['n_genes_by_counts'] < 8000) &   # remove extreme high gene counts (doublets)
+    (combined_adata.obs['total_counts'] > 500) &         # keep cells with at least 500 UMIs
+    (combined_adata.obs['total_counts'] < 30000) &       # remove extreme high UMI counts
+    (combined_adata.obs['pct_counts_mt'] < 20),          # remove cells with >20% mitochondrial counts
+    :
+    ].copy()
+
+``` 
+
+##### Before filtering 
+
+![Before filtering](figures/violin_QC.png?v=1)
+
+##### After filtering 
+![After filtering](figures/violin_AfterQC.png?v=1)
 
 <img src="figures/umap_clustered_Neurog2_Abca8a.png?v=1" alt="Abca8a" width="33%"><img src="figures/umap_clustered_Neurog2_Chat.png?v=1" alt="Chat" width="33%"><img src="figures/umap_clustered_Neurog2_Insm1.png?v=1" alt="Insm1" width="33%">
 <img src="figures/umap_clustered_Neurog2_Nrl.png?v=1" alt="Nrl" width="33%"><img src="figures/umap_clustered_Neurog2_Notch1.png?v=1" alt="Notch1" width="33%"><img src="figures/umap_clustered_Neurog2_Acta2.png?v=1" alt="Acta2" width="33%">
