@@ -275,7 +275,7 @@ rule runMallet:
        python src/run_mallet.py \
          --cistopic_obj_pickle {input} \
          --mallet_path {params.MALLET_PATH} \
-         --n_topics 5 25 55 \
+         --n_topics 5  \
          --n_cpu {params.nCPU} \
          --n_iter 500 \
          --tmp_path {params.tmp} \

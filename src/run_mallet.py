@@ -22,10 +22,10 @@ def run_mallet_on_object(cistopic_obj, mallet_path, n_topics, n_cpu, n_iter,
     # Set Java memory for Mallet
     os.environ['MALLET_MEMORY'] = mallet_memory
 
-    # Run MALLET CGS models
+    # Run MALLET CGS models - FIXED: Use list of topic numbers
     models = run_cgs_models_mallet(
         cistopic_obj,
-        n_topics=n_topics,
+        n_topics=[n_topics] if isinstance(n_topics, int) else n_topics,
         n_cpu=n_cpu,
         n_iter=n_iter,
         random_state=random_state,
@@ -121,4 +121,3 @@ if __name__ == "__main__":
         eta=args.eta,
         eta_by_topic=args.eta_by_topic
     )
-
