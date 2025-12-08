@@ -24,8 +24,8 @@ All steps are automated and reproducible using the [Makefile](https://github.com
 
 
 <img src="figures/umap_clustered_Neurog2_Abca8a.png?v=1" alt="Abca8a" width="33%"><img src="figures/umap_clustered_Neurog2_Chat.png?v=1" alt="Chat" width="33%"><img src="figures/umap_clustered_Neurog2_Insm1.png?v=1" alt="Insm1" width="33%">
-<img src="figures/umap_clustered_Neurog2_Nrl.png?v=1" alt="Nrl" width="33%"><img src="figures/umap_clustered_Neurog2_Samples.png?v=1" alt="Samples" width="33%"><img src="figures/umap_clustered_Neurog2_Acta2.png?v=1" alt="Acta2" width="33%">
-<img src="figures/umap_clustered_Neurog2_Clusters.png?v=1" alt="Clusters" width="33%"><img src="figures/umap_clustered_Neurog2_Isl1.png?v=1" alt="Isl1" width="33%"><img src="figures/umap_clustered_Neurog2_Olig2.png?v=1" alt="Olig2" width="33%">
+<img src="figures/umap_clustered_Neurog2_Nrl.png?v=1" alt="Nrl" width="33%"><img src="figures/umap_clustered_Neurog2_Notch1.png?v=1" alt="Notch1" width="33%"><img src="figures/umap_clustered_Neurog2_Acta2.png?v=1" alt="Acta2" width="33%">
+<img src="figures/umap_clustered_Neurog2_Rpe65.png?v=1" alt="Rpe65" width="33%"><img src="figures/umap_clustered_Neurog2_Isl1.png?v=1" alt="Isl1" width="33%"><img src="figures/umap_clustered_Neurog2_Olig2.png?v=1" alt="Olig2" width="33%">
 <img src="figures/umap_clustered_Neurog2_Sebox.png?v=1" alt="Sebox" width="33%"><img src="figures/umap_clustered_Neurog2_Apoe.png?v=1" alt="Apoe" width="33%"><img src="figures/umap_clustered_Neurog2_Csf1r.png?v=1" alt="Csf1r" width="33%">
 <img src="figures/umap_clustered_Neurog2_Kcnj8.png?v=1" alt="Kcnj8" width="33%"><img src="figures/umap_clustered_Neurog2_Otx2.png?v=1" alt="Otx2" width="33%"><img src="figures/umap_clustered_Neurog2_Slc17a7.png?v=1" alt="Slc17a7" width="33%">
 <img src="figures/umap_clustered_Neurog2_Aqp4.png?v=1" alt="Aqp4" width="33%"><img src="figures/umap_clustered_Neurog2_Elavl3.png?v=1" alt="Elavl3" width="33%"><img src="figures/umap_clustered_Neurog2_Lhx1.png?v=1" alt="Lhx1" width="33%">
@@ -41,8 +41,7 @@ All steps are automated and reproducible using the [Makefile](https://github.com
 <img src="figures/umap_clustered_Neurog2_Calb1.png?v=1" alt="Calb1" width="33%"><img src="figures/umap_clustered_Neurog2_Glul.png?v=1" alt="Glul" width="33%"><img src="figures/umap_clustered_Neurog2_Neurog2_9SA.png?v=1" alt="Neurog2_9SA" width="33%">
 <img src="figures/umap_clustered_Neurog2_Rho.png?v=1" alt="Rho" width="33%"><img src="figures/umap_clustered_Neurog2_Rlbp1.png?v=1" alt="Rlbp1" width="33%"><img src="figures/umap_clustered_Neurog2_Vim.png?v=1" alt="Vim" width="33%">
 <img src="figures/umap_clustered_Neurog2_Calb2.png?v=1" alt="Calb2" width="33%"><img src="figures/umap_clustered_Neurog2_Hes1.png?v=1" alt="Hes1" width="33%"><img src="figures/umap_clustered_Neurog2_Neurog2.png?v=1" alt="Neurog2" width="33%">
-<img src="figures/umap_clustered_Neurog2_Ccr2.png?v=1" alt="Ccr2" width="33%"><img src="figures/umap_clustered_Neurog2_Hes5.png?v=1" alt="Hes5" width="33%"><img src="figures/umap_clustered_Neurog2_Notch1.png?v=1" alt="Notch1" width="33%">
-<img src="figures/umap_clustered_Neurog2_Rpe65.png?v=1" alt="Rpe65" width="33%">
+<img src="figures/umap_clustered_Neurog2_Ccr2.png?v=1" alt="Ccr2" width="33%"><img src="figures/umap_clustered_Neurog2_Hes5.png?v=1" alt="Hes5" width="33%">
 
 
 
