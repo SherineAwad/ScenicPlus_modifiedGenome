@@ -27,7 +27,9 @@ rule all:
         f"annotated_clustered_{config['PROJ_NAME']}.h5ad", 
         config['RNA_Barcodes'], 
         config['out_dir'] + "/merged_with_meta.pkl", 
-        MALLET = config['out_dir'] +"/MALLET", 
+        config['out_dir'] + "/MALLET/merged_cistopic_with_models.pkl", 
+        #config['out_dir'] + "/umap_clusters/cistopic_obj_clustered.pkl", 
+
 rule pseudobulk:
     output:
         bed_paths = f"{config['out_dir']}/consensus_peak_calling/bed_paths.tsv",
@@ -267,9 +269,10 @@ rule runMallet:
      params: 
         tmp = config['out_dir'] +"/TMP",
         MALLET_PATH = config['MALLET_PATH'],
-        nCPU = config['n_cpu'], 
+        nCPU = config['n_cpu'],
+        save_path = config['out_dir'] + "/MALLET" 
      output:
-        MALLET = config['out_dir'] +"/MALLET",
+        config['out_dir'] + "/MALLET/merged_cistopic_with_models.pkl"
      shell: 
        """
        python src/run_mallet.py \
@@ -279,11 +282,33 @@ rule runMallet:
          --n_cpu {params.nCPU} \
          --n_iter 500 \
          --tmp_path {params.tmp} \
-         --save_path {output} \
+         --save_path {params.save_path} \
          --mallet_memory 80G \
          --random_state 555 \
          --alpha 0.1 \
          --alpha_by_topic \
          --eta 0.01 \
          --eta_by_topic
-     """ 
+     """
+
+
+
+
+
+rule clustet_cistopic:  
+    input: 
+         config['out_dir'] + "/MALLET/merged_cistopic_with_models.pkl"  
+    output: 
+         config['out_dir'] + "/umap_clusters/cistopic_obj_clustered.pkl"
+    params: 
+         config['out_dir'] + "/umap_clusters"
+    shell:      
+         """
+         python cluster_cistopic.py \
+            -i {input} \
+            -o {output} \
+            -d {params} \
+            --resolutions 0.5 0.8 1 1.5  2 3 \
+            --k 30
+        """
+   
