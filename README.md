@@ -71,3 +71,14 @@ combined_adata = combined_adata[
 #### scRNA annotations 
 ![annotations](figures/annotated_clustered_Neurog2_annotationsON.png?v=1)
 
+
+
+# ATAC preprocessing 
+
+
+![](scenicOuts/QC/TH1_barcode_qc.png?v=1)  
+![](scenicOuts/QC/TH1_qc.png?v=1)  
+![](scenicOuts/QC/TH2_barcode_qc.png?v=1)
+![](scenicOuts/QC/TH2_qc.png?v=1) 
+
+
