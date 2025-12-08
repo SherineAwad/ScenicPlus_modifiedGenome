@@ -47,8 +47,8 @@ All steps are automated and reproducible using the [Makefile](https://github.com
 
 
 ![Dotplot](figures/clustered_Neurog2_Dotplot.png?v=1)
-![Clusters UMAP](figures/umap_clustered_Neurog2_Clusters.png?v=)
+![Clusters UMAP](figures/umap_clustered_Neurog2_Clusters.png?v=1)
 
-
-
+#### scRNA annotations 
+![annotations](figures/annotated_clustered_Neurog2_annotationsON.png?v=1)
 
