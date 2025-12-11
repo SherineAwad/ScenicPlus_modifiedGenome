@@ -51,6 +51,7 @@ else:
 # -----------------------------
 sc.pp.normalize_total(combined_adata, target_sum=1e4)
 sc.pp.log1p(combined_adata)
+combined_adata.raw = combined_adata 
 sc.pp.scale(combined_adata)
 
 sc.tl.pca(combined_adata, svd_solver="arpack")
