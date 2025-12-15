@@ -29,6 +29,9 @@ rule all:
         config['out_dir'] + "/merged_with_meta.pkl", 
         config['out_dir'] + "/MALLET/merged_cistopic_with_models.pkl", 
         #config['out_dir'] + "/umap_clusters/cistopic_obj_clustered.pkl", 
+        #config['out_dir'] + "/topics/cistopic_obj_binarized.pkl",
+        #config['out_dir'] + "/DARs/cistopic_obj_with_DARs.pkl",
+        #expand(config["out_dir"] + "/region_sets/DARs_cell_type/{ct}.bed",ct=config['CELL_TYPES'])
 
 rule pseudobulk:
     output:
@@ -288,14 +291,11 @@ rule runMallet:
          --alpha 0.1 \
          --alpha_by_topic \
          --eta 0.01 \
-         --eta_by_topic
+         --eta_by_topic \
+         --direct_mode
      """
 
-
-
-
-
-rule clustet_cistopic:  
+rule cluster_cistopic:  
     input: 
          config['out_dir'] + "/MALLET/merged_cistopic_with_models.pkl"  
     output: 
@@ -304,11 +304,63 @@ rule clustet_cistopic:
          config['out_dir'] + "/umap_clusters"
     shell:      
          """
-         python cluster_cistopic.py \
+         python src/cluster_cistopic.py \
             -i {input} \
             -o {output} \
             -d {params} \
             --resolutions 0.5 0.8 1 1.5  2 3 \
             --k 30
         """
-   
+  
+
+rule binarize_topics:
+     input: 
+         config['out_dir'] + "/umap_clusters/cistopic_obj_clustered.pkl"
+     params: 
+         config['out_dir'] + "/topics"
+     output: 
+         config['out_dir'] + "/topics/cistopic_obj_binarized.pkl"
+     shell:
+         """
+         python src/binarize_topics.py \
+             --input_pickle {input} \
+             --output_dir  {params} -n 3000 -s 1e4
+        """
+
+rule dar_analysis: 
+     input: 
+       config['out_dir'] + "/topics/cistopic_obj_binarized.pkl"
+     params: 
+       outdir = config['out_dir'] + "/DARs",
+       adjpval = config['adjpval_thr'], 
+       logfc = config['log2fc_thr'],
+       nCPU = config['n_cpu']
+     output: 
+          config['out_dir'] + "/DARs/cistopic_obj_with_DARs.pkl"    
+     shell: 
+       """
+       python src/dar_analysis.py \
+           -i {input} \
+           -o {params.outdir} \
+           -v celltype \
+           --n_cpu {params.nCPU} \
+           --scale_impute 1e7 \
+           --scale_norm 1e4 \
+           --adjpval_thr {params.adjpval} \
+           --log2fc_thr {params.logfc}
+       """
+
+rule export_regions: 
+      input: 
+          config['out_dir'] + "/DARs/cistopic_obj_with_DARs.pkl"
+      params: 
+          config['out_dir'] + "/region_sets"
+      output:
+        expand(
+            config["out_dir"] + "/region_sets/DARs_cell_type/{ct}.bed",
+            ct=config['CELL_TYPES']
+        )
+      shell: 
+           """
+           python src/export_region_sets.py -i {input} -o {params}  
+           """

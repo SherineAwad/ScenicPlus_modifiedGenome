@@ -572,6 +572,12 @@ Examples:
                     # Restore original function
                     tmt_eval.metric_coherence_mimno_2011 = original_coherence
         
+        # SAVE THE MODELS AS PICKLE FILE FOR SCENIC+
+        models_pickle_path = Path(save_path) / "merged_cistopic_with_models.pkl"
+        with open(models_pickle_path, 'wb') as f:
+            pickle.dump(models, f)
+        logger.info(f"Saved models pickle for SCENIC+: {models_pickle_path}")
+        
         logger.info("MALLET LDA models completed successfully!")
         logger.info(f"Results saved in: {save_path}")
         
