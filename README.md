@@ -183,17 +183,17 @@ combined_adata = combined_adata[
 
 # Mallet Results 
 
-![](scenicOuts/umap_clusters/celltype_umap.png?v=2) 
+![](scenicOuts/umap_clusters/celltype_umap.png?v=3) 
 
-![](scenicOuts/umap_clusters/annotated_clusters_res_0.5.png?v=2)
+![](scenicOuts/umap_clusters/annotated_clusters_res_0.5.png?v=3)
 
-![](scenicOuts/umap_clusters/annotated_clusters_res_0.8.png?v=2)
+![](scenicOuts/umap_clusters/annotated_clusters_res_0.8.png?v=3)
 
-![](scenicOuts/umap_clusters/annotated_clusters_res_1.0.png?v=2)
+![](scenicOuts/umap_clusters/annotated_clusters_res_1.0.png?v=3)
 
-![](scenicOuts/umap_clusters/annotated_clusters_res_1.5.png?v=2)
+![](scenicOuts/umap_clusters/annotated_clusters_res_1.5.png?v=3)
 
-![](scenicOuts/umap_clusters/annotated_clusters_res_2.0.png?v=2)
+![](scenicOuts/umap_clusters/annotated_clusters_res_2.0.png?v=3)
 
-![](scenicOuts/umap_clusters/annotated_clusters_res_3.0.png?v=2)
+![](scenicOuts/umap_clusters/annotated_clusters_res_3.0.png?v=3)
 

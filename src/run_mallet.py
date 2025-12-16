@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-"""
-Script to run MALLET LDA models for cisTopic analysis with comprehensive error handling.
-"""
 
 import os
 import sys
@@ -614,6 +611,11 @@ Examples:
             max_topics = max(models.keys())
             cistopic_obj.selected_model = models[max_topics]
         
+        # FIX: ADD cell_topic DIRECTLY to cistopic_obj for DAR analysis
+        if hasattr(cistopic_obj, 'selected_model') and 'cell_topic' in cistopic_obj.selected_model:
+            cistopic_obj.cell_topic = cistopic_obj.selected_model['cell_topic']
+            logger.info(f"Added cell_topic directly to cistopic_obj: {cistopic_obj.cell_topic.shape}")
+        
         # SAVE THE MODIFIED cisTopic OBJECT WITH MODELS
         final_output_path = Path(save_path) / "merged_cistopic_with_models.pkl"
         with open(final_output_path, 'wb') as f:
@@ -621,6 +623,8 @@ Examples:
         logger.info(f"Saved complete cisTopic object with models: {final_output_path}")
         logger.info(f"Object has cell_data: {hasattr(cistopic_obj, 'cell_data')}")
         logger.info(f"Object has models: {hasattr(cistopic_obj, 'models')}")
+        logger.info(f"Object has cell_topic: {hasattr(cistopic_obj, 'cell_topic')}")
+        
         if hasattr(cistopic_obj, 'selected_model'):
             logger.info(f"Selected model cell_topic shape: {cistopic_obj.selected_model['cell_topic'].shape}")
             
