@@ -95,7 +95,7 @@ motif_Y → (GENE_X_custom, 0.12)
 
 ---
 
-### Step 5: Ranking conversion (mechanical)
+### Step 5: Ranking conversion 
 
 Scores are sorted per motif:
 
@@ -114,6 +114,7 @@ motif_X:
 
 > **If a new gene sequence is present as a FASTA entry in the input FASTA, cisTarget DB creation WILL include it, scan it, compute motif scores, and store those scores in the database.**
 
+----- 
 
 # scRNA preprocessing 
 
