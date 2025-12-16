@@ -22,15 +22,36 @@ def cluster_cistopic_manual(input_pickle, output_pickle, outdir, resolutions=[0.
 
     print("Performing manual clustering with Scanpy...")
 
-    # Get topic matrix
-    if hasattr(obj, 'selected_model') and hasattr(obj.selected_model, 'cell_topic'):
-        cell_topic = obj.selected_model.cell_topic
+    # Get topic matrix 
+    if hasattr(obj, 'selected_model') and 'cell_topic' in obj.selected_model:
+        cell_topic = obj.selected_model['cell_topic']
         print(f"Using cell_topic from selected_model: {cell_topic.shape}")
     elif hasattr(obj, 'cell_topic'):
         cell_topic = obj.cell_topic
         print(f"Using cell_topic from object: {cell_topic.shape}")
     else:
         raise ValueError("No cell_topic found in object or selected_model.")
+
+    # FIX: MALLET output has 6 columns, columns 0 and 1 are garbage
+    # Column 0 is document ID (0,1,2,...), column 1 is some metadata (0 for all)
+    # Actual topics start from column 2
+    if cell_topic.shape[1] == 6:
+        print(f"WARNING: cell_topic has {cell_topic.shape[1]} columns but expected 5 topics")
+        print(f"Columns: {cell_topic.columns.tolist()}")
+        
+        # Check if first column is numeric sequence (document IDs)
+        first_col = cell_topic.iloc[:, 0].values
+        if np.array_equal(first_col, np.arange(len(first_col))):
+            print("Column 0 appears to be document IDs (0,1,2,...)")
+            # Check if column 1 is all zeros or same value
+            second_col = cell_topic.iloc[:, 1].values
+            unique_vals = np.unique(second_col)
+            if len(unique_vals) == 1:
+                print(f"Column 1 appears to be metadata (all values = {unique_vals[0]})")
+                # Use columns 2-6 as the actual 5 topics
+                cell_topic = cell_topic.iloc[:, 2:7]
+                cell_topic.columns = [f"Topic{i+1}" for i in range(5)]
+                print(f"Fixed cell_topic shape: {cell_topic.shape}")
 
     # Orient matrix: cells × topics
     if cell_topic.shape[0] == obj.cell_data.shape[0]:
@@ -39,6 +60,16 @@ def cluster_cistopic_manual(input_pickle, output_pickle, outdir, resolutions=[0.
     else:
         topic_matrix = cell_topic.T
         print("Using cell_topic.T as cells × topics")
+
+    # Debug: check topic distributions
+    print(f"\nTopic matrix shape: {topic_matrix.shape}")
+    print(f"Topic matrix min: {topic_matrix.min().min():.4f}")
+    print(f"Topic matrix max: {topic_matrix.max().max():.4f}")
+    print(f"Topic matrix mean: {topic_matrix.mean().mean():.4f}")
+    
+    # Check if values look like proper probabilities
+    row_sums = topic_matrix.sum(axis=1)
+    print(f"Row sums - min: {row_sums.min():.4f}, max: {row_sums.max():.4f}, mean: {row_sums.mean():.4f}")
 
     # Create AnnData
     adata = sc.AnnData(X=topic_matrix)
@@ -187,4 +218,3 @@ if __name__ == "__main__":
     parser.add_argument("--k", type=int, default=10)
     args = parser.parse_args()
     cluster_cistopic_manual(args.input_pickle, args.output_pickle, args.outdir, args.resolutions, args.k)
-

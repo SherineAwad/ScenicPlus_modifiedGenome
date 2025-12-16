@@ -222,10 +222,10 @@ def run_mallet_directly(cistopic_obj, n_topics, n_cpu, n_iter, random_state,
         
         logger.info("MALLET training completed successfully")
         
-        # Step 5: Parse results with error handling
+        # Step 5: Parse results with error handling - FIXED VERSION
         logger.info(f"Parsing results from {doctopics_file}")
         
-        # Parse document topics
+        # Parse document topics - FIXED TO SKIP FIRST 2 COLUMNS
         try:
             # Read doctopics file
             with open(doctopics_file, 'r') as f:
@@ -234,27 +234,33 @@ def run_mallet_directly(cistopic_obj, n_topics, n_cpu, n_iter, random_state,
             # Skip header
             data_lines = lines[1:] if lines[0].startswith('#') else lines
             
-            # Parse data
+            # Parse data - FIXED: MALLET outputs doc_id, unknown_column, then n_topics columns
             cell_topic_data = []
             cell_names = []
+            
             for line in data_lines:
                 parts = line.strip().split('\t')
-                if len(parts) < 2:
+                if len(parts) < 2 + n_topics:  # Need doc_id + unknown + n_topics
                     continue
                 
-                # First part is document ID or name
+                # First part is document ID (integer 0,1,2,...)
                 doc_id = parts[0]
                 cell_names.append(doc_id)
                 
-                # Get topic proportions (skip the first column which is doc name)
+                # FIXED: Skip first 2 columns (doc_id and unknown column)
+                # Columns 2 through (2 + n_topics - 1) contain the actual topic probabilities
                 topic_props = []
-                for i in range(1, len(parts)):
-                    if i <= n_topics:
-                        try:
-                            prop = float(parts[i])
-                            topic_props.append(prop)
-                        except:
-                            topic_props.append(0.0)
+                for i in range(2, 2 + n_topics):  # START FROM COLUMN 2!
+                    try:
+                        prop = float(parts[i])
+                        topic_props.append(prop)
+                    except:
+                        topic_props.append(0.0)
+                
+                # DEBUG: Check what we're parsing
+                if len(cell_topic_data) < 3:
+                    logger.debug(f"First few rows - parts: {parts[:10]}")
+                    logger.debug(f"  doc_id: {doc_id}, topics: {topic_props}")
                 
                 # If we didn't get enough topics, pad with zeros
                 while len(topic_props) < n_topics:
@@ -262,14 +268,26 @@ def run_mallet_directly(cistopic_obj, n_topics, n_cpu, n_iter, random_state,
                 
                 cell_topic_data.append(topic_props)
             
-            # Convert to DataFrame
+            # Convert to DataFrame aligned with original cisTopic object
+            # MALLET uses integer document IDs (0,1,2,...) which match our cell indices
             cell_topic = pd.DataFrame(
                 cell_topic_data,
-                index=cell_names,
+                index=[int(idx) for idx in cell_names],  # Convert to int indices
                 columns=[f"Topic{i+1}" for i in range(n_topics)]
             )
             
+            # Reindex to match original cell names
+            cell_topic = cell_topic.reindex(range(len(cistopic_obj.cell_names)))
+            cell_topic.index = cistopic_obj.cell_names  # Use actual cell names
+            
+            # Validate: row sums should be ~1.0 (probability distributions)
+            row_sums = cell_topic.sum(axis=1)
             logger.info(f"Created cell-topic matrix: {cell_topic.shape}")
+            logger.info(f"Row sums - min: {row_sums.min():.4f}, max: {row_sums.max():.4f}, mean: {row_sums.mean():.4f}")
+            
+            if abs(row_sums.mean() - 1.0) > 0.1:
+                logger.warning(f"Row sums average = {row_sums.mean():.4f}, expected ~1.0")
+                logger.warning("This suggests incorrect parsing of doctopics.txt")
             
         except Exception as e:
             logger.error(f"Error parsing doctopics file: {e}")
@@ -282,14 +300,24 @@ def run_mallet_directly(cistopic_obj, n_topics, n_cpu, n_iter, random_state,
                 columns=[f"Topic{i+1}" for i in range(n_topics)]
             )
         
-        # Step 6: Parse topic keys
+        # Step 6: Parse topic keys - CREATE PROPER pycisTopic STRUCTURE
         logger.info(f"Parsing topic keys from {topickeys_file}")
         
         try:
             with open(topickeys_file, 'r') as f:
                 lines = f.readlines()
             
-            topic_word_data = []
+            # Get region names from cisTopic object
+            region_names = cistopic_obj.region_names
+            
+            # Create topic-region matrix with zeros
+            topic_region = pd.DataFrame(
+                np.zeros((n_topics, len(region_names))),
+                index=[f"Topic{i+1}" for i in range(n_topics)],
+                columns=region_names
+            )
+            
+            # Fill with weights from MALLET
             for line in lines:
                 parts = line.strip().split('\t')
                 if len(parts) < 3:
@@ -299,60 +327,63 @@ def run_mallet_directly(cistopic_obj, n_topics, n_cpu, n_iter, random_state,
                 weight = float(parts[1])
                 word_counts = parts[2].split(' ')
                 
-                # Parse word:count pairs
-                word_dict = {}
+                # Parse word:count pairs (MALLET uses token indices as words)
                 for wc in word_counts:
                     if ':' in wc:
-                        word, count = wc.split(':')
-                        word_dict[word] = float(count)
-                
-                topic_word_data.append(word_dict)
+                        token_idx, count = wc.split(':')
+                        try:
+                            token_idx = int(token_idx)
+                            if token_idx < len(region_names):
+                                region_name = region_names[token_idx]
+                                topic_region.iloc[topic_id][region_name] = float(count)
+                        except:
+                            pass  # Skip if token index doesn't map to region
             
-            # Convert to DataFrame (this is simplified)
-            # In reality, we need to match vocabulary
-            topic_word = pd.DataFrame(topic_word_data).fillna(0)
-            logger.info(f"Created topic-word matrix placeholder: {topic_word.shape}")
+            logger.info(f"Created topic-region matrix: {topic_region.shape}")
             
         except Exception as e:
             logger.error(f"Error parsing topic keys: {e}")
-            logger.error("Creating placeholder topic-word matrix")
+            logger.error("Creating placeholder topic-region matrix")
             
             # Create placeholder
-            n_words = 1000  # Arbitrary
-            topic_word = pd.DataFrame(
-                np.random.dirichlet(np.ones(n_words), size=n_topics),
-                columns=[f"Word{i+1}" for i in range(n_words)]
+            region_names = cistopic_obj.region_names
+            topic_region = pd.DataFrame(
+                np.random.dirichlet(np.ones(len(region_names)), size=n_topics),
+                index=[f"Topic{i+1}" for i in range(n_topics)],
+                columns=region_names
             )
         
-        # Step 7: Save results
+        # Step 7: Create proper pycisTopic model structure
+        model_dict = {
+            'cell_topic': cell_topic,
+            'topic_region': topic_region,
+            'parameters': {
+                'n_topics': n_topics,
+                'alpha': alpha,
+                'alpha_by_topic': alpha_by_topic,
+                'eta': eta,
+                'eta_by_topic': eta_by_topic,
+                'n_iter': n_iter,
+                'random_state': random_state
+            },
+            'metrics': {
+                'loglikelihood': np.nan,
+                'coherence': np.nan
+            }
+        }
+        
+        # Step 8: Save MALLET output files
         logger.info(f"Saving results to {save_dir}")
-        
-        # Save cell-topic matrix
-        cell_topic_file = save_dir / f"{model_name}_cell_topic.csv"
-        cell_topic.to_csv(cell_topic_file)
-        logger.info(f"Saved cell-topic matrix to {cell_topic_file}")
-        
-        # Save topic-word matrix
-        topic_word_file = save_dir / f"{model_name}_topic_word.csv"
-        topic_word.to_csv(topic_word_file)
-        logger.info(f"Saved topic-word matrix to {topic_word_file}")
-        
-        # Copy MALLET output files
         for src_file in [state_file, doctopics_file, topickeys_file, inferencer_file]:
             if src_file.exists():
                 dst_file = save_dir / src_file.name
                 shutil.copy2(src_file, dst_file)
                 logger.info(f"Copied {src_file.name} to save directory")
         
-        return {
-            'cell_topic': cell_topic,
-            'topic_word': topic_word,
-            'n_topics': n_topics,
-            'model_name': model_name
-        }
+        return model_dict
     
     # Run the models
-    results = {}
+    models_dict = {}
     for n_topic in n_topics:
         model_name = f"model_{n_topic}topics"
         logger.info(f"Processing model with {n_topic} topics")
@@ -373,11 +404,11 @@ def run_mallet_directly(cistopic_obj, n_topics, n_cpu, n_iter, random_state,
                 mallet_path=mallet_path,
                 model_name=model_name
             )
-            results[n_topic] = model_result
+            models_dict[n_topic] = model_result
         except Exception as e:
             logger.error(f"Failed to run model with {n_topic} topics: {e}")
     
-    return results
+    return models_dict
 
 
 def main():
@@ -395,7 +426,7 @@ Examples:
   # With custom parameters
   python src/run_mallet.py --cistopic_obj_pickle scenicOuts/merged_with_meta.pkl \\
                            --n_topics 5 --n_cpu 8 --n_iter 500 --mallet_memory 80G \\
-                           --alpha 0.1 --alpha_by_topic --eta 0.01 --eta_by_topic
+                           --alpha 50 --alpha_by_topic --eta 0.1
   
   # Use direct mode (bypasses pycisTopic bugs)
   python src/run_mallet.py --cistopic_obj_pickle scenicOuts/merged_with_meta.pkl \\
@@ -421,11 +452,11 @@ Examples:
     
     # Hyperparameters
     parser.add_argument('--alpha', type=float, default=50.0,
-                       help='Alpha hyperparameter for LDA')
+                       help='Alpha hyperparameter for LDA (use 50.0 as in tutorial)')
     parser.add_argument('--alpha_by_topic', action='store_true',
                        help='Whether alpha is per-topic (True) or symmetric (False)')
     parser.add_argument('--eta', type=float, default=0.1,
-                       help='Eta hyperparameter for LDA')
+                       help='Eta hyperparameter for LDA (use 0.1 as in tutorial)')
     parser.add_argument('--eta_by_topic', action='store_true',
                        help='Whether eta is per-topic (True) or symmetric (False)')
     
@@ -572,11 +603,33 @@ Examples:
                     # Restore original function
                     tmt_eval.metric_coherence_mimno_2011 = original_coherence
         
-        # SAVE THE MODELS AS PICKLE FILE FOR SCENIC+
-        models_pickle_path = Path(save_path) / "merged_cistopic_with_models.pkl"
-        with open(models_pickle_path, 'wb') as f:
-            pickle.dump(models, f)
-        logger.info(f"Saved models pickle for SCENIC+: {models_pickle_path}")
+        # ADD MODELS TO ORIGINAL cisTopic OBJECT
+        cistopic_obj.models = models
+        
+        # Select the first model (or the only one)
+        if len(n_topics) == 1:
+            cistopic_obj.selected_model = models[n_topics[0]]
+        elif models:
+            # Use the model with the most topics as default
+            max_topics = max(models.keys())
+            cistopic_obj.selected_model = models[max_topics]
+        
+        # SAVE THE MODIFIED cisTopic OBJECT WITH MODELS
+        final_output_path = Path(save_path) / "merged_cistopic_with_models.pkl"
+        with open(final_output_path, 'wb') as f:
+            pickle.dump(cistopic_obj, f)
+        logger.info(f"Saved complete cisTopic object with models: {final_output_path}")
+        logger.info(f"Object has cell_data: {hasattr(cistopic_obj, 'cell_data')}")
+        logger.info(f"Object has models: {hasattr(cistopic_obj, 'models')}")
+        if hasattr(cistopic_obj, 'selected_model'):
+            logger.info(f"Selected model cell_topic shape: {cistopic_obj.selected_model['cell_topic'].shape}")
+            
+            # Validate the output
+            cell_topic = cistopic_obj.selected_model['cell_topic']
+            row_sums = cell_topic.sum(axis=1)
+            logger.info(f"Validation - Row sums: min={row_sums.min():.4f}, max={row_sums.max():.4f}, mean={row_sums.mean():.4f}")
+            if abs(row_sums.mean() - 1.0) > 0.1:
+                logger.warning("WARNING: Topic distributions may not be proper probabilities!")
         
         logger.info("MALLET LDA models completed successfully!")
         logger.info(f"Results saved in: {save_path}")

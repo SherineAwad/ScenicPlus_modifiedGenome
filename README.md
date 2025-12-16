@@ -69,7 +69,7 @@ combined_adata = combined_adata[
 ![Clusters UMAP](figures/umap_clustered_Neurog2_Clusters.png?v=3)
 
 #### scRNA annotations 
-![annotations](figures/annotated_clustered_Neurog2_annotationsON.png?v=2)
+![annotations](figures/annotated_clustered_Neurog2_annotationsON.png?v=3)
 
 
 
@@ -81,4 +81,23 @@ combined_adata = combined_adata[
 ![](scenicOuts/QC/TH2_barcode_qc.png?v=2)
 ![](scenicOuts/QC/TH2_qc.png?v=2) 
 
+
+
+
+
+# Mallet Results 
+
+![](scenicOuts/umap_clusters/celltype_umap.png?v=2) 
+
+![](scenicOuts/umap_clusters/annotated_clusters_res_0.5.png?v=2)
+
+![](scenicOuts/umap_clusters/annotated_clusters_res_0.8.png?v=2)
+
+![](scenicOuts/umap_clusters/annotated_clusters_res_1.0.png?v=2)
+
+![](scenicOuts/umap_clusters/annotated_clusters_res_1.5.png?v=2)
+
+![](scenicOuts/umap_clusters/annotated_clusters_res_2.0.png?v=2)
+
+![](scenicOuts/umap_clusters/annotated_clusters_res_3.0.png?v=2)
 
