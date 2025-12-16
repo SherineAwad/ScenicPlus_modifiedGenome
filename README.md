@@ -101,14 +101,14 @@ For each motif, cisTarget stores:
 motif_id → list of (region_id, score)
 ```
 
-Example for your gene:
+Example for our gene:
 
 ```text
 motif_X → (GENE_X_custom, 0.87)
 motif_Y → (GENE_X_custom, 0.12)
 ```
 
-✔ Motif scores for your gene exist on disk.
+✔ Motif scores for our gene exist on disk.
 
 ---
 
