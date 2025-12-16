@@ -133,6 +133,16 @@ motif_X:
 
 > **If a new gene sequence is present as a FASTA entry in the input FASTA, cisTarget DB creation WILL include it, scan it, compute motif scores, and store those scores in the database.**
 
+## ⚡⚡⚡ How cisTarget Scores a New Gene Region
+
+1. **Region definition**: The new gene (or its 1kb windows) exists as a FASTA entry. cisTarget treats each entry as a “region” with a sequence.
+
+2. **Motif scanning**: For each motif in the collection, cisTarget uses Cluster-Buster (CBUST) to slide the PWM along the region, calculate match scores at each position, and integrate them across the region.
+
+3. **Score assignment**: CBUST produces a single numeric score per motif per region, representing how strongly the motif matches the sequence.
+
+4. **Score storage**: Each motif score is stored in the cisTarget database as `region_id (the gene) → motif_id → score`. Every motif is scored independently, and no enrichment or interpretation occurs at this stage.
+
 
 # scRNA preprocessing 
 
