@@ -20,7 +20,7 @@ The resulting **custom cisTarget database** can then be used in **Scenic+** to p
 All steps are automated and reproducible using the [Makefile](https://github.com/SherineAwad/ScenicPlus_modifiedGenome/blob/master/Makefile).
 
 
-````md
+
 # How cisTarget DB Creation Includes the New Gene 
 
 ### Step 1: Our FASTA contains the gene
