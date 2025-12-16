@@ -20,6 +20,120 @@ The resulting **custom cisTarget database** can then be used in **Scenic+** to p
 All steps are automated and reproducible using the [Makefile](https://github.com/SherineAwad/ScenicPlus_modifiedGenome/blob/master/Makefile).
 
 
+````md
+# How cisTarget DB Creation Includes the New Gene (Mechanics Only)
+
+## What cisTarget DB creation does — mechanically
+
+The cisTarget DB creation step has **only one job**:
+
+> **Store motif scores for each FASTA sequence (region)**
+
+Nothing else happens at this stage.
+
+---
+
+## Inputs that matter
+
+1. **Regions FASTA**: the FASTA file passed to cisTarget. Example:
+
+```bash
+-f regions.fa
+````
+
+2. **Motif PWMs**: the motif collection used for scanning. Example:
+
+```bash
+motifs/*.cb
+```
+
+---
+
+## How a new gene is included (step by step)
+
+### Step 1: Our FASTA contains the gene
+
+The FASTA passed to cisTarget **contains our new gene sequence**, e.g.:
+
+```fasta
+>GENE_X_custom
+ATGCGTACGATCG...
+```
+
+✔ At this moment, cisTarget **knows this sequence exists**.
+
+---
+
+### Step 2: FASTA entries become “regions”
+
+cisTarget treats each FASTA record as **one independent region**:
+
+```text
+Region_ID = GENE_X_custom
+Sequence  = ATGCGTACGATCG...
+```
+
+✔ The new gene is now a **region** in the database.
+
+---
+
+### Step 3: Motif scanning on each region
+
+For every motif:
+
+```text
+for motif in motifs:
+    for region in fasta_entries:
+        score(motif, region.sequence)
+```
+
+✔ The new gene sequence is scanned
+✔ Motif scores are computed
+✔ No filtering or skipping occurs
+
+---
+
+### Step 4: Scores are written to the database
+
+For each motif, cisTarget stores:
+
+```text
+motif_id → list of (region_id, score)
+```
+
+Example for your gene:
+
+```text
+motif_X → (GENE_X_custom, 0.87)
+motif_Y → (GENE_X_custom, 0.12)
+```
+
+✔ Motif scores for your gene exist on disk.
+
+---
+
+### Step 5: Ranking conversion (mechanical)
+
+Scores are sorted per motif:
+
+```text
+motif_X:
+  region_1
+  region_2
+  ...
+  GENE_X_custom   ← some rank
+```
+
+✔ The new gene has a rank for each motif
+✔ No biological interpretation
+✔ No enrichment logic
+
+
+## One-sentence summary
+
+> **If a new gene sequence is present as a FASTA entry in the input FASTA, cisTarget DB creation WILL include it, scan it, compute motif scores, and store those scores in the database.**
+
+
 # scRNA preprocessing 
 
 ##### Filtering 
