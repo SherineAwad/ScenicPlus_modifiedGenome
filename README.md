@@ -21,35 +21,7 @@ All steps are automated and reproducible using the [Makefile](https://github.com
 
 
 ````md
-# How cisTarget DB Creation Includes the New Gene (Mechanics Only)
-
-## What cisTarget DB creation does — mechanically
-
-The cisTarget DB creation step has **only one job**:
-
-> **Store motif scores for each FASTA sequence (region)**
-
-Nothing else happens at this stage.
-
----
-
-## Inputs that matter
-
-1. **Regions FASTA**: the FASTA file passed to cisTarget. Example:
-
-```bash
--f regions.fa
-````
-
-2. **Motif PWMs**: the motif collection used for scanning. Example:
-
-```bash
-motifs/*.cb
-```
-
----
-
-## How a new gene is included (step by step)
+# How cisTarget DB Creation Includes the New Gene 
 
 ### Step 1: Our FASTA contains the gene
 
