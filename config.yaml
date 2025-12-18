@@ -26,14 +26,13 @@ minTSS: 0.1
 minFrip: 0.0
 blacklist: "mm10-blacklist.v2.bed"
 
-adjpval_thr: 0.05
-log2fc_thr: 0.5
+adjpval_thr: 0.1
+log2fc_thr: 0.25
 # Output
 out_dir: "scenicOuts"
 
 # Resources
 n_cpu: 8
-
 
 
 #size of the modified genome

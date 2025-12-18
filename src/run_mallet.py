@@ -338,11 +338,23 @@ def run_mallet_directly(cistopic_obj, n_topics, n_cpu, n_iter, random_state,
             
             logger.info(f"Created topic-region matrix: {topic_region.shape}")
             
+            # FIX: Add small epsilon to ALL regions to ensure imputation works on all regions
+            # This is necessary because pycisTopic's impute_accessibility() only imputes regions with non-zero weights
+            print(f"[INFO] Adding small epsilon to all regions in topic_region for proper imputation")
+            epsilon = 1e-10
+            topic_region += epsilon  # Add epsilon to ALL entries
+            
+            # Normalize rows (topics) to maintain probability distributions
+            topic_region = topic_region.div(topic_region.sum(axis=1), axis=0)
+            
+            print(f"[INFO] After epsilon addition - Non-zero rows: {(topic_region != 0).any(axis=1).sum()}")
+            print(f"[INFO] After epsilon addition - Non-zero columns: {(topic_region != 0).any(axis=0).sum()}")
+            
         except Exception as e:
             logger.error(f"Error parsing topic keys: {e}")
             logger.error("Creating placeholder topic-region matrix")
             
-            # Create placeholder
+            # Create placeholder with ALL regions having small weights
             region_names = cistopic_obj.region_names
             topic_region = pd.DataFrame(
                 np.random.dirichlet(np.ones(len(region_names)), size=n_topics),

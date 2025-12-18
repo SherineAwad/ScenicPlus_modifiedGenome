@@ -28,9 +28,9 @@ rule all:
         config['RNA_Barcodes'], 
         config['out_dir'] + "/merged_with_meta.pkl", 
         config['out_dir'] + "/MALLET/merged_cistopic_with_models.pkl", 
-        #config['out_dir'] + "/umap_clusters/cistopic_obj_clustered.pkl", 
-        #config['out_dir'] + "/topics/cistopic_obj_binarized.pkl",
-        #config['out_dir'] + "/DARs/cistopic_obj_with_DARs.pkl",
+        config['out_dir'] + "/umap_clusters/cistopic_obj_clustered.pkl", 
+        config['out_dir'] + "/topics/cistopic_obj_binarized.pkl",
+        config['out_dir'] + "/DARs/cistopic_obj_with_DARs.pkl",
         #expand(config["out_dir"] + "/region_sets/DARs_cell_type/{ct}.bed",ct=config['CELL_TYPES'])
 
 rule pseudobulk:
@@ -288,10 +288,9 @@ rule runMallet:
          --save_path {params.save_path} \
          --mallet_memory 80G \
          --random_state 555 \
-         --alpha 0.1 \
+         --alpha 50 \
          --alpha_by_topic \
-         --eta 0.01 \
-         --eta_by_topic \
+         --eta 0.1 \
          --direct_mode
      """
 
@@ -334,7 +333,7 @@ rule dar_analysis:
        outdir = config['out_dir'] + "/DARs",
        adjpval = config['adjpval_thr'], 
        logfc = config['log2fc_thr'],
-       nCPU = config['n_cpu']
+       nCPU = 2 #config['n_cpu']
      output: 
           config['out_dir'] + "/DARs/cistopic_obj_with_DARs.pkl"    
      shell: 
@@ -344,8 +343,8 @@ rule dar_analysis:
            -o {params.outdir} \
            -v celltype \
            --n_cpu {params.nCPU} \
-           --scale_impute 1e7 \
-           --scale_norm 1e4 \
+           --scale_impute 1e5 \
+           --scale_norm 1e3 \
            --adjpval_thr {params.adjpval} \
            --log2fc_thr {params.logfc}
        """

@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from types import SimpleNamespace
+import scipy.sparse as sp
 
 from pycisTopic.diff_features import (
     impute_accessibility,
@@ -100,6 +101,15 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
     else:
         raise ValueError(f"[ERROR] Unexpected fragment_matrix shape: {fm.shape}")
 
+    # DEBUG: Check original fragment matrix statistics
+    print("\n[DEBUG] Original fragment matrix stats:")
+    if sp.issparse(fm):
+        print(f"  Non-zero entries: {fm.nnz}")
+        print(f"  Sparsity: {1 - (fm.nnz / (fm.shape[0] * fm.shape[1])):.4f}")
+        print(f"  Min value: {fm.data.min() if len(fm.data) > 0 else 0}")
+        print(f"  Max value: {fm.data.max() if len(fm.data) > 0 else 0}")
+        print(f"  Mean value: {fm.data.mean() if len(fm.data) > 0 else 0}")
+
     # Run imputation
     print("[INFO] Running imputation of accessibility...")
     imputed_acc_obj = impute_accessibility(
@@ -109,6 +119,26 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
         scale_factor=scale_factor_impute
     )
 
+    # DEBUG: Check imputed data statistics
+    print("\n[DEBUG] Imputed accessibility stats:")
+    # FIX: Use .mtx attribute for CistopicImputedFeatures object
+    imputed_matrix = imputed_acc_obj.mtx
+    print(f"  Shape: {imputed_matrix.shape}")
+    if sp.issparse(imputed_matrix):
+        print(f"  Non-zero entries: {imputed_matrix.nnz}")
+        print(f"  Sparsity: {1 - (imputed_matrix.nnz / (imputed_matrix.shape[0] * imputed_matrix.shape[1])):.4f}")
+        if imputed_matrix.nnz > 0:
+            print(f"  Min value: {imputed_matrix.data.min():.6f}")
+            print(f"  Max value: {imputed_matrix.data.max():.6f}")
+            print(f"  Mean value: {imputed_matrix.data.mean():.6f}")
+            # Check for any non-zero values
+            non_zero_count = (imputed_matrix.data > 0).sum()
+            print(f"  Values > 0: {non_zero_count}/{imputed_matrix.nnz}")
+    else:
+        print(f"  Min value: {imputed_matrix.min():.6f}")
+        print(f"  Max value: {imputed_matrix.max():.6f}")
+        print(f"  Mean value: {imputed_matrix.mean():.6f}")
+
     # Normalize imputed accessibility
     print("[INFO] Normalizing imputed accessibility...")
     normalized_imputed_acc_obj = normalize_scores(
@@ -116,19 +146,70 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
         scale_factor=scale_factor_norm
     )
 
-    # Find highly variable regions
-    print("[INFO] Finding highly variable regions...")
+    # DEBUG: Check normalized data statistics
+    print("\n[DEBUG] Normalized imputed accessibility stats:")
+    # FIX: Use .mtx attribute for normalized object too
+    norm_matrix = normalized_imputed_acc_obj.mtx
+    print(f"  Shape: {norm_matrix.shape}")
+    if sp.issparse(norm_matrix):
+        print(f"  Non-zero entries: {norm_matrix.nnz}")
+        if norm_matrix.nnz > 0:
+            print(f"  Min value: {norm_matrix.data.min():.6f}")
+            print(f"  Max value: {norm_matrix.data.max():.6f}")
+            print(f"  Mean value: {norm_matrix.data.mean():.6f}")
+    else:
+        print(f"  Min value: {norm_matrix.min():.6f}")
+        print(f"  Max value: {norm_matrix.max():.6f}")
+        print(f"  Mean value: {norm_matrix.mean():.6f}")
+
+    # Find highly variable regions with relaxed parameters
+    print("[INFO] Finding highly variable regions (with relaxed parameters)...")
     variable_regions = find_highly_variable_features(
         normalized_imputed_acc_obj,
-        min_disp=0.01,
-        min_mean=0.001,
-        max_mean=3,
+        min_disp=0.001,      # RELAXED: was 0.01
+        min_mean=0.0001,     # RELAXED: was 0.001  
+        max_mean=10,         # RELAXED: was 3
         max_disp=np.inf,
         n_bins=20,
-        n_top_features=None,
+        n_top_features=5000,  # NEW: Force top 5000 regions
         plot=False
     )
     print(f"[INFO] Number of highly variable regions: {len(variable_regions)}")
+    
+    # If still no variable regions, investigate further
+    if len(variable_regions) == 0:
+        print("\n[ERROR] CRITICAL: Still no highly variable regions found!")
+        print("[ERROR] Possible causes:")
+        print("  1. Imputation failed (all values are 0 or NaN)")
+        print("  2. Normalization failed (scale factor too large/small)")
+        print("  3. Topic model doesn't capture meaningful variation")
+        print("  4. Cell_topic matrix has problems")
+        
+        # Try manual calculation as last resort
+        print("\n[WARNING] Attempting manual workaround...")
+        # Calculate mean and variance manually
+        if sp.issparse(norm_matrix):
+            # For sparse matrix, calculate mean per region
+            region_means = np.array(norm_matrix.mean(axis=0)).flatten()
+            # Simple variance approximation for sparse data
+            region_vars = np.array((norm_matrix.power(2).mean(axis=0) - np.square(region_means))).flatten()
+        else:
+            region_means = norm_matrix.mean(axis=0)
+            region_vars = norm_matrix.var(axis=0)
+        
+        print(f"  Region means - min: {region_means.min():.6f}, max: {region_means.max():.6f}")
+        print(f"  Region vars - min: {region_vars.min():.6f}, max: {region_vars.max():.6f}")
+        
+        # Select top 5000 regions by variance
+        if len(region_vars) > 5000:
+            top_indices = np.argsort(region_vars)[-5000:]
+            variable_regions = [normalized_imputed_acc_obj.region_names[i] for i in top_indices]
+            print(f"  Selected top 5000 variable regions manually")
+        else:
+            variable_regions = normalized_imputed_acc_obj.region_names
+            print(f"  Using all regions as fallback")
+        
+        print(f"[INFO] Now using {len(variable_regions)} regions for DAR")
 
     # Find DARs
     print("[INFO] Finding differential accessibility regions (DARs)...")

@@ -197,3 +197,21 @@ combined_adata = combined_adata[
 
 ![](scenicOuts/umap_clusters/annotated_clusters_res_3.0.png?v=3)
 
+
+
+
+# Summary: Number of DARs Found per Group
+
+| Group        | Number of DARs |
+|-------------|----------------|
+| AC          | 40             |
+| BC          | 40             |
+| Cones       | 40             |
+| MG          | 40             |
+| MGPC        | 40             |
+| Microglia   | 20             |
+| Rod         | 20             |
+
+
+
+
