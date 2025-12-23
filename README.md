@@ -228,7 +228,6 @@ The gene activity score depends on how open **these linked regions** are in a gi
 
 # Differential gene activity 
 
-# Differential Gene Activity (SCENIC/SCENIC+)
 
 Differential gene activity identifies genes whose activity differs **between groups of cells**. After computing gene activity scores for all cells, SCENIC compares these scores across a **metadata category**, such as cell type, condition, or treatment.  
 
