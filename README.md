@@ -199,8 +199,18 @@ combined_adata = combined_adata[
 
 
 
+# Differential Accessible Regions (DARs)
 
-# Summary: Number of DARs Found per Group
+Differential Accessible Regions (DARs) are chromatin regions whose accessibility **differs between groups of cells**. These regions can include promoters, enhancers, or other regulatory elements.  
+
+DARs are identified by comparing accessibility values across groups, such as cell types or conditions. Regions that are significantly more open in one group compared to another are called **DARs**.  
+
+**Intuition:**  
+- DARs highlight regulatory regions that change accessibility across conditions.  
+- They are the **region-level differences** that can contribute to differential gene activity if they are linked to a gene.
+
+
+### Summary: Number of DARs Found per Group
 
 | Group        | Number of DARs |
 |-------------|----------------|
