@@ -215,3 +215,24 @@ combined_adata = combined_adata[
 
 
 
+
+# Gene activity 
+
+Gene activity is computed by first identifying **co-accessible regions** — regions of chromatin that tend to be open together across cells. For a specific gene, SCENIC only considers the regions that are **physically close to or linked to that gene**, such as its promoter, nearby enhancers, or distal elements connected via co-accessibility.  
+
+The gene activity score depends on how open **these linked regions** are in a given cell. Open regions that are linked to gene X increase the activity score of gene X, but do **not** affect gene Y, because each gene’s score is computed from its own set of regulatory regions.  
+
+**Intuition:** a gene is more likely to be expressed if the chromatin around it and its linked regulatory regions is accessible, which is why gene activity scores are gene-specific.
+
+
+
+# Differential gene activity 
+
+# Differential Gene Activity (SCENIC/SCENIC+)
+
+Differential gene activity identifies genes whose activity differs **between groups of cells**. After computing gene activity scores for all cells, SCENIC compares these scores across a **metadata category**, such as cell type, condition, or treatment.  
+
+For each gene, it tests whether the activity scores are significantly different between groups. This is still **based on chromatin accessibility**: genes are differentially active because the accessibility of their linked regulatory regions varies between groups. A gene whose regulatory regions are more open in one group than another will have a higher activity score in that group, making it a **differentially active gene**.  
+
+**Intuition:** differential gene activity highlights genes whose regulatory potential changes across conditions, revealing which genes are likely “turned on” in one group of cells compared to another.
+
