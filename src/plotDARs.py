@@ -6,7 +6,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import PowerNorm
 
 def plot_top_dars_on_cluster_umap(dar_pickle, cluster_pickle, output_dir):
     os.makedirs(output_dir, exist_ok=True)
@@ -27,10 +26,21 @@ def plot_top_dars_on_cluster_umap(dar_pickle, cluster_pickle, output_dir):
     y = umap_df['UMAP_2'].values
     cluster_cells = list(umap_df.index)
 
-    # Top DARs
+    # Top DARs: pick **most significant per group**
     if not hasattr(dar_obj, "markers_dict"):
         raise ValueError("[ERROR] DAR object has no markers_dict")
-    top_dars = {group: df.index[0] for group, df in dar_obj.markers_dict.items() if len(df) > 0}
+    top_dars = {}
+    for group, df in dar_obj.markers_dict.items():
+        if len(df) == 0:
+            continue
+        # pick the region with the smallest FDR or highest score if available
+        if 'FDR' in df.columns:
+            best_region = df['FDR'].idxmin()
+        elif 'score' in df.columns:
+            best_region = df['score'].idxmax()
+        else:
+            best_region = df.index[0]
+        top_dars[group] = best_region
 
     # Imputed matrix
     if not hasattr(dar_obj, "imputed_acc_obj"):
@@ -49,6 +59,7 @@ def plot_top_dars_on_cluster_umap(dar_pickle, cluster_pickle, output_dir):
             continue
         region_idx = imputed_regions.index(region)
 
+        # Align cells
         try:
             cell_indices = [imputed_cells.index(c) for c in cluster_cells]
         except ValueError:
@@ -56,17 +67,18 @@ def plot_top_dars_on_cluster_umap(dar_pickle, cluster_pickle, output_dir):
             continue
 
         values = mtx[cell_indices, region_idx]
-        if hasattr(values, "toarray"):
+        if hasattr(values, "toarray"):  # sparse
             values = values.toarray().flatten()
         else:
             values = np.array(values).flatten()
 
-        # ---- FIX: better color scaling ----
-        # PowerNorm stretches low values while keeping high values distinguishable
-        norm = PowerNorm(gamma=0.3, vmin=np.min(values), vmax=np.max(values))
+        # Make color scale more visible: clip extreme outliers, normalize
+        vmax = np.percentile(values, 99)
+        vmin = np.percentile(values, 1)
 
         fig, ax = plt.subplots(figsize=(10, 8))
-        sc = ax.scatter(x, y, c=values, cmap='viridis', s=5, alpha=0.7, norm=norm)
+        sc = ax.scatter(x, y, c=values, cmap='viridis', s=5, alpha=0.7,
+                        vmin=vmin, vmax=vmax)
         plt.colorbar(sc, ax=ax, label="Imputed Accessibility")
         ax.set_xlabel("UMAP 1")
         ax.set_ylabel("UMAP 2")
@@ -78,7 +90,7 @@ def plot_top_dars_on_cluster_umap(dar_pickle, cluster_pickle, output_dir):
         print(f"[INFO] Plotted {group} -> {out_png}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Plot top DARs on cluster UMAP with visible color scale")
+    parser = argparse.ArgumentParser(description="Plot top DARs on cluster UMAP")
     parser.add_argument("-d", "--dar_pickle", required=True, help="DAR object pickle")
     parser.add_argument("-c", "--cluster_pickle", required=True, help="Cluster object pickle (with UMAP in cell_data)")
     parser.add_argument("-o", "--output_dir", required=True, help="Output directory for plots")
