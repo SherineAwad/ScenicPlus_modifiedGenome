@@ -51,6 +51,10 @@ neurog2_cistarget: neurog2.with_1kb_bg_padding.fa aertslab_motif_colleciton/v10n
 	-t 12 \
 	-c /nfs/turbo/umms-thahoang/sherine/mScenicP/cluster-buster-master/cbust
 
+# Create gene annotation BED file from GTF
+neurog2_gene_annotation.bed:
+	@echo "Converting GTF to BED format..."
+	awk '$$1 !~ /^#/' neurog2.gtf | awk '$$3 == "gene"' | convert2bed --input=gtf > neurog2_gene_annotation.bed
 
 #----------------------------------------------------
 ##Downloadig some needed resource

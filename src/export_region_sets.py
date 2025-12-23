@@ -5,10 +5,10 @@ import argparse
 from pycisTopic.utils import region_names_to_coordinates
 
 def export_region_sets(cistopic_pickle, out_dir):
-    # Create folders
-    os.makedirs(os.path.join(out_dir, "region_sets", "Topics_otsu"), exist_ok=True)
-    os.makedirs(os.path.join(out_dir, "region_sets", "Topics_top_3k"), exist_ok=True)
-    os.makedirs(os.path.join(out_dir, "region_sets", "DARs_cell_type"), exist_ok=True)
+    # Create folders - REMOVE THE EXTRA "region_sets" SUBDIRECTORY
+    os.makedirs(os.path.join(out_dir, "Topics_otsu"), exist_ok=True)
+    os.makedirs(os.path.join(out_dir, "Topics_top_3k"), exist_ok=True)
+    os.makedirs(os.path.join(out_dir, "DARs_cell_type"), exist_ok=True)
 
     # Load binarised CistopicObject
     with open(cistopic_pickle, "rb") as f:
@@ -30,7 +30,7 @@ def export_region_sets(cistopic_pickle, out_dir):
             if len(regions) > 0:
                 df = region_names_to_coordinates(regions)
                 df.sort_values(["Chromosome", "Start", "End"]).to_csv(
-                    os.path.join(out_dir, "region_sets", "Topics_otsu", f"{topic}.bed"),
+                    os.path.join(out_dir, "Topics_otsu", f"{topic}.bed"),  # FIXED PATH
                     sep="\t", header=False, index=False
                 )
                 print(f"[INFO] Exported {len(regions)} regions for {topic}")
@@ -48,7 +48,7 @@ def export_region_sets(cistopic_pickle, out_dir):
             if len(regions) > 0:
                 df = region_names_to_coordinates(regions)
                 df.sort_values(["Chromosome", "Start", "End"]).to_csv(
-                    os.path.join(out_dir, "region_sets", "Topics_top_3k", f"{topic}.bed"),
+                    os.path.join(out_dir, "Topics_top_3k", f"{topic}.bed"),  # FIXED PATH
                     sep="\t", header=False, index=False
                 )
                 print(f"[INFO] Exported {len(regions)} regions for {topic}")
@@ -67,14 +67,14 @@ def export_region_sets(cistopic_pickle, out_dir):
             if len(regions) > 0:
                 df = region_names_to_coordinates(regions)
                 df.sort_values(["Chromosome", "Start", "End"]).to_csv(
-                    os.path.join(out_dir, "region_sets", "DARs_cell_type", f"{cell_type}.bed"),
+                    os.path.join(out_dir, "DARs_cell_type", f"{cell_type}.bed"),  # FIXED PATH
                     sep="\t", header=False, index=False
                 )
                 print(f"[INFO] Exported {len(regions)} DARs for {cell_type}")
             else:
                 print(f"[WARNING] No regions found for {cell_type}")
 
-    print(f"[INFO] Region sets exported to: {os.path.join(out_dir, 'region_sets')}")
+    print(f"[INFO] Region sets exported to: {out_dir}")  # FIXED MESSAGE
 
 
 if __name__ == "__main__":
@@ -84,4 +84,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     export_region_sets(args.input_pickle, args.out_dir)
-

@@ -25,6 +25,9 @@ uniqFrag: 200
 minTSS: 0.1
 minFrip: 0.0
 blacklist: "mm10-blacklist.v2.bed"
+ANNOT_BED: "neurog2_gene_annotation.bed"
+
+CHROM_SIZE: "neurog2.chrom.sizes"
 
 adjpval_thr: 0.1
 log2fc_thr: 0.25

@@ -31,8 +31,11 @@ rule all:
         config['out_dir'] + "/umap_clusters/cistopic_obj_clustered.pkl", 
         config['out_dir'] + "/topics/cistopic_obj_binarized.pkl",
         config['out_dir'] + "/DARs/cistopic_obj_with_DARs.pkl",
-        #expand(config["out_dir"] + "/region_sets/DARs_cell_type/{ct}.bed",ct=config['CELL_TYPES'])
-
+        expand(config["out_dir"] + "/region_sets/DARs_cell_type/{ct}.bed",ct=config['CELL_TYPES']),
+        config['out_dir'] + "/gene_activity/gene_activity.tsv",
+        config['out_dir'] + "/gene_activity/gene_activity_obj.pkl",
+        #config['out_dir'] + "/gene_activity/DAG_markers.pkl"
+ 
 rule pseudobulk:
     output:
         bed_paths = f"{config['out_dir']}/consensus_peak_calling/bed_paths.tsv",
@@ -363,3 +366,39 @@ rule export_regions:
            """
            python src/export_region_sets.py -i {input} -o {params}  
            """
+
+
+
+rule gene_activity:
+   input: 
+       config['out_dir'] + "/DARs/cistopic_obj_with_DARs.pkl"
+   params: 
+      annotation_bed = config['ANNOT_BED'],
+      chrom_size = config['CHROM_SIZE'],
+      output = config['out_dir'] + "/gene_activity"
+   output: 
+      config['out_dir'] + "/gene_activity/gene_activity.tsv",
+      config['out_dir'] + "/gene_activity/gene_activity_obj.pkl"
+   shell: 
+     """ 
+      python src/gene_activity.py \
+        -i {input} \
+        -a {params.annotation_bed} \
+        -c {params.chrom_size} \
+        -o {params.output}
+     """ 
+
+
+rule diff_gene_activity:
+    input:
+       config['out_dir'] + "/DARs/cistopic_obj_with_DARs.pkl",
+       config['out_dir'] + "/gene_activity/gene_activity_obj.pkl"
+    params:
+       outdir = config['out_dir'] +  "/gene_activity/",
+       nCPUs = config['n_cpu']
+    output:
+        config['out_dir'] + "/gene_activity/DAG_markers.pkl"
+    shell:
+       "python src/differential_gene_activity.py -i {input[0]} -g {input[1]} -o {params.outdir} --n_cpu {params.nCPUs} --temp_dir /tmp --celltype_column celltype"
+
+

@@ -27,6 +27,11 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
 
     os.makedirs(output_dir, exist_ok=True)
 
+    # CREATE FOLDERS FOR SCENIC+ DOWNSTREAM ANALYSIS
+    os.makedirs(os.path.join(output_dir, "region_sets", "Topics_otsu"), exist_ok=True)
+    os.makedirs(os.path.join(output_dir, "region_sets", "Topics_top_3k"), exist_ok=True)
+    os.makedirs(os.path.join(output_dir, "region_sets", "DARs_cell_type"), exist_ok=True)
+
     # Load the binarized Cistopic object
     with open(cistopic_pickle, "rb") as f:
         cistopic_obj = pickle.load(f)
@@ -34,7 +39,7 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
     # FIX: Convert selected_model from dict to object for pycisTopic compatibility
     if hasattr(cistopic_obj, 'selected_model') and isinstance(cistopic_obj.selected_model, dict):
         print("[INFO] Converting selected_model dict to object for pycisTopic compatibility")
-        
+
         # Create object version using the module-level ModelObject
         cistopic_obj.selected_model = ModelObject(cistopic_obj.selected_model)
         print("[INFO] selected_model converted to object")
@@ -42,15 +47,15 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
     # CRITICAL FIX: Check and fix topic_region orientation
     # pycisTopic expects: topic_region rows = region names, columns = topic names
     print("[INFO] Checking topic_region orientation...")
-    
+
     if hasattr(cistopic_obj, 'selected_model') and hasattr(cistopic_obj.selected_model, 'topic_region'):
         tr = cistopic_obj.selected_model.topic_region
         print(f"  topic_region shape: {tr.shape}")
-        
+
         if isinstance(tr, pd.DataFrame):
             # Check if region names are in rows (index) or columns
             region_names = cistopic_obj.region_names
-            
+
             # Sample check: are region names in columns?
             if any(region in tr.columns for region in region_names[:10]):
                 print(f"[FIX] topic_region has region names as COLUMNS - transposing!")
@@ -61,11 +66,11 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
     # pycisTopic expects: topics as rows, cells as columns
     # Your data has: cells as rows, topics as columns
     print("[INFO] Checking cell_topic orientation...")
-    
+
     if hasattr(cistopic_obj, 'cell_topic'):
         ct = cistopic_obj.cell_topic
         print(f"  Original cell_topic shape: {ct.shape}")
-        
+
         # Check if we need to transpose
         # If first column name looks like a topic name (Topic1, Topic2, etc.)
         if isinstance(ct, pd.DataFrame) and len(ct.columns) > 0:
@@ -74,7 +79,7 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
                 print(f"[FIX] Transposing cell_topic (cells×topics -> topics×cells)")
                 cistopic_obj.cell_topic = ct.T
                 print(f"  Transposed cell_topic shape: {cistopic_obj.cell_topic.shape}")
-    
+
     # Also fix selected_model.cell_topic
     if hasattr(cistopic_obj, 'selected_model') and hasattr(cistopic_obj.selected_model, 'cell_topic'):
         sm_ct = cistopic_obj.selected_model.cell_topic
@@ -145,6 +150,10 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
         imputed_acc_obj,
         scale_factor=scale_factor_norm
     )
+    
+    # ATTACH IMPUTED OBJECTS FOR GENE ACTIVITY ANALYSIS
+    cistopic_obj.imputed_acc_obj = imputed_acc_obj
+    cistopic_obj.normalized_imputed_acc_obj = normalized_imputed_acc_obj
 
     # DEBUG: Check normalized data statistics
     print("\n[DEBUG] Normalized imputed accessibility stats:")
@@ -175,7 +184,7 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
         plot=False
     )
     print(f"[INFO] Number of highly variable regions: {len(variable_regions)}")
-    
+
     # If still no variable regions, investigate further
     if len(variable_regions) == 0:
         print("\n[ERROR] CRITICAL: Still no highly variable regions found!")
@@ -184,7 +193,7 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
         print("  2. Normalization failed (scale factor too large/small)")
         print("  3. Topic model doesn't capture meaningful variation")
         print("  4. Cell_topic matrix has problems")
-        
+
         # Try manual calculation as last resort
         print("\n[WARNING] Attempting manual workaround...")
         # Calculate mean and variance manually
@@ -196,10 +205,10 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
         else:
             region_means = norm_matrix.mean(axis=0)
             region_vars = norm_matrix.var(axis=0)
-        
+
         print(f"  Region means - min: {region_means.min():.6f}, max: {region_means.max():.6f}")
         print(f"  Region vars - min: {region_vars.min():.6f}, max: {region_vars.max():.6f}")
-        
+
         # Select top 5000 regions by variance
         if len(region_vars) > 5000:
             top_indices = np.argsort(region_vars)[-5000:]
@@ -208,7 +217,7 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
         else:
             variable_regions = normalized_imputed_acc_obj.region_names
             print(f"  Using all regions as fallback")
-        
+
         print(f"[INFO] Now using {len(variable_regions)} regions for DAR")
 
     # Find DARs
