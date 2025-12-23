@@ -244,6 +244,13 @@ DARs are identified by comparing accessibility values across groups, such as cel
 | Rod         | 20             |
 
 
+![](scenicOuts/DARs/UMAP_Rod_chr10_128821288-128822049.png?v=2)
+![](scenicOuts/DARs/UMAP_Microglia_chr10_44380210-44381883.png?v=2)
+![](scenicOuts/DARs/UMAP_MGPC_chr11_54122132-54123756.png?v=2)
+![](scenicOuts/DARs/UMAP_MG_chr10_21082176-21084166.png?v=2)
+![](scenicOuts/DARs/UMAP_Cones_chr10_128821288-128822049.png?v=2)
+![](scenicOuts/DARs/UMAP_BC_chr11_54122132-54123756.png?v=2)
+![](scenicOuts/DARs/UMAP_AC_chr10_128821288-128822049.png?v=2)
 
 
 
