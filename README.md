@@ -114,6 +114,27 @@ motif_X:
 
 > **If a new gene sequence is present as a FASTA entry in the input FASTA, cisTarget DB creation WILL include it, scan it, compute motif scores, and store those scores in the database.**
 
+
+### Critical concept (this is the key point)
+
+**Motif scanning is associated with DNA sequences, NOT with genes.**
+
+- cisTarget scans **raw DNA sequence**.
+- Motifs are detected in **genomic regions (windows)**.
+- Genes are **not used or referenced** during motif scanning.
+
+If a DNA sequence exists in the FASTA and is scanned, motifs in that sequence **can be detected**, regardless of whether the sequence corresponds to a known, annotated, endogenous, or synthetic gene.
+
+---
+
+## What rebuilding cisTarget does NOT do
+
+- ❌ It does **not** use gene names.
+- ❌ It does **not** use the GTF annotation.
+- ❌ It does **not** require genes to be annotated or “known”.
+
+Gene annotations are only used **later**, during downstream steps, when genomic regions are assigned to genes.
+
 ----- 
 
 # scRNA preprocessing 
@@ -181,7 +202,7 @@ combined_adata = combined_adata[
 
 
 
-# Mallet Results 
+# Co-accessible regions using Mallet 
 
 ![](scenicOuts/umap_clusters/celltype_umap.png?v=3) 
 
