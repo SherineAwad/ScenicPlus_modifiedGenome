@@ -204,7 +204,10 @@ combined_adata = combined_adata[
 
 # Co-accessible regions using Mallet 
 
+### Celltype UMAP
 ![](scenicOuts/umap_clusters/celltype_umap.png?v=3) 
+
+### Resolutions Change 
 
 <img src="scenicOuts/umap_clusters/annotated_clusters_res_0.5.png?v=3" alt="res_0.5" width="33%"><img src="scenicOuts/umap_clusters/annotated_clusters_res_0.8.png?v=3" alt="res_0.8" width="33%"><img src="scenicOuts/umap_clusters/annotated_clusters_res_1.0.png?v=3" alt="res_1.0" width="33%">
 <img src="scenicOuts/umap_clusters/annotated_clusters_res_1.5.png?v=3" alt="res_1.5" width="33%"><img src="scenicOuts/umap_clusters/annotated_clusters_res_2.0.png?v=3" alt="res_2.0" width="33%"><img src="scenicOuts/umap_clusters/annotated_clusters_res_3.0.png?v=3" alt="res_3.0" width="33%">
