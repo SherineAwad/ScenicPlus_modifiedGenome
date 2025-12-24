@@ -245,6 +245,13 @@ DARs are identified by comparing accessibility values across groups, such as cel
 
 
 
+![](scenicOuts/DARs/Rod_chr10_128821288_128822049.png?v=3)
+![](scenicOuts/DARs/Microglia_chr10_44380210_44381883.png?v=3)
+![](scenicOuts/DARs/MGPC_chr11_54122132_54123756.png?v=3)
+![](scenicOuts/DARs/MG_chr10_21082176_21084166.png?v=3)
+![](scenicOuts/DARs/Cones_chr10_128821288_128822049.png?v=3)
+![](scenicOuts/DARs/BC_chr11_54122132_54123756.png?v=3)
+![](scenicOuts/DARs/AC_chr10_128821288_128822049.png?v=3)
 
 
 # Gene activity 
