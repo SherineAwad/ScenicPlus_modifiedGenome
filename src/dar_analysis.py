@@ -25,14 +25,17 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
             scale_factor_norm=1e4, n_cpu=5, temp_dir=None,
             adjpval_thr=0.1, log2fc_thr=np.log2(1.2)):
 
-    os.makedirs(output_dir, exist_ok=True)
-
-    # CREATE FOLDERS FOR SCENIC+ DOWNSTREAM ANALYSIS
-    os.makedirs(os.path.join(output_dir, "region_sets", "Topics_otsu"), exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "region_sets", "Topics_top_3k"), exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "region_sets", "DARs_cell_type"), exist_ok=True)
+    # CREATE OUTPUT DIRECTORY FIRST WITH PROPER ERROR HANDLING
+    print(f"[INFO] Creating output directory: {output_dir}")
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+        print(f"[INFO] Output directory ready: {output_dir}")
+    except Exception as e:
+        print(f"[ERROR] Failed to create output directory: {e}")
+        raise
 
     # Load the binarized Cistopic object
+    print(f"[INFO] Loading cisTopic object from {cistopic_pickle}")
     with open(cistopic_pickle, "rb") as f:
         cistopic_obj = pickle.load(f)
 
@@ -106,15 +109,6 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
     else:
         raise ValueError(f"[ERROR] Unexpected fragment_matrix shape: {fm.shape}")
 
-    # DEBUG: Check original fragment matrix statistics
-    print("\n[DEBUG] Original fragment matrix stats:")
-    if sp.issparse(fm):
-        print(f"  Non-zero entries: {fm.nnz}")
-        print(f"  Sparsity: {1 - (fm.nnz / (fm.shape[0] * fm.shape[1])):.4f}")
-        print(f"  Min value: {fm.data.min() if len(fm.data) > 0 else 0}")
-        print(f"  Max value: {fm.data.max() if len(fm.data) > 0 else 0}")
-        print(f"  Mean value: {fm.data.mean() if len(fm.data) > 0 else 0}")
-
     # Run imputation
     print("[INFO] Running imputation of accessibility...")
     imputed_acc_obj = impute_accessibility(
@@ -124,101 +118,30 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
         scale_factor=scale_factor_impute
     )
 
-    # DEBUG: Check imputed data statistics
-    print("\n[DEBUG] Imputed accessibility stats:")
-    # FIX: Use .mtx attribute for CistopicImputedFeatures object
-    imputed_matrix = imputed_acc_obj.mtx
-    print(f"  Shape: {imputed_matrix.shape}")
-    if sp.issparse(imputed_matrix):
-        print(f"  Non-zero entries: {imputed_matrix.nnz}")
-        print(f"  Sparsity: {1 - (imputed_matrix.nnz / (imputed_matrix.shape[0] * imputed_matrix.shape[1])):.4f}")
-        if imputed_matrix.nnz > 0:
-            print(f"  Min value: {imputed_matrix.data.min():.6f}")
-            print(f"  Max value: {imputed_matrix.data.max():.6f}")
-            print(f"  Mean value: {imputed_matrix.data.mean():.6f}")
-            # Check for any non-zero values
-            non_zero_count = (imputed_matrix.data > 0).sum()
-            print(f"  Values > 0: {non_zero_count}/{imputed_matrix.nnz}")
-    else:
-        print(f"  Min value: {imputed_matrix.min():.6f}")
-        print(f"  Max value: {imputed_matrix.max():.6f}")
-        print(f"  Mean value: {imputed_matrix.mean():.6f}")
-
     # Normalize imputed accessibility
     print("[INFO] Normalizing imputed accessibility...")
     normalized_imputed_acc_obj = normalize_scores(
         imputed_acc_obj,
         scale_factor=scale_factor_norm
     )
-    
+
     # ATTACH IMPUTED OBJECTS FOR GENE ACTIVITY ANALYSIS
     cistopic_obj.imputed_acc_obj = imputed_acc_obj
     cistopic_obj.normalized_imputed_acc_obj = normalized_imputed_acc_obj
-
-    # DEBUG: Check normalized data statistics
-    print("\n[DEBUG] Normalized imputed accessibility stats:")
-    # FIX: Use .mtx attribute for normalized object too
-    norm_matrix = normalized_imputed_acc_obj.mtx
-    print(f"  Shape: {norm_matrix.shape}")
-    if sp.issparse(norm_matrix):
-        print(f"  Non-zero entries: {norm_matrix.nnz}")
-        if norm_matrix.nnz > 0:
-            print(f"  Min value: {norm_matrix.data.min():.6f}")
-            print(f"  Max value: {norm_matrix.data.max():.6f}")
-            print(f"  Mean value: {norm_matrix.data.mean():.6f}")
-    else:
-        print(f"  Min value: {norm_matrix.min():.6f}")
-        print(f"  Max value: {norm_matrix.max():.6f}")
-        print(f"  Mean value: {norm_matrix.mean():.6f}")
 
     # Find highly variable regions with relaxed parameters
     print("[INFO] Finding highly variable regions (with relaxed parameters)...")
     variable_regions = find_highly_variable_features(
         normalized_imputed_acc_obj,
-        min_disp=0.001,      # RELAXED: was 0.01
-        min_mean=0.0001,     # RELAXED: was 0.001  
-        max_mean=10,         # RELAXED: was 3
+        min_disp=0.001,
+        min_mean=0.0001,
+        max_mean=10,
         max_disp=np.inf,
         n_bins=20,
-        n_top_features=5000,  # NEW: Force top 5000 regions
+        n_top_features=5000,
         plot=False
     )
     print(f"[INFO] Number of highly variable regions: {len(variable_regions)}")
-
-    # If still no variable regions, investigate further
-    if len(variable_regions) == 0:
-        print("\n[ERROR] CRITICAL: Still no highly variable regions found!")
-        print("[ERROR] Possible causes:")
-        print("  1. Imputation failed (all values are 0 or NaN)")
-        print("  2. Normalization failed (scale factor too large/small)")
-        print("  3. Topic model doesn't capture meaningful variation")
-        print("  4. Cell_topic matrix has problems")
-
-        # Try manual calculation as last resort
-        print("\n[WARNING] Attempting manual workaround...")
-        # Calculate mean and variance manually
-        if sp.issparse(norm_matrix):
-            # For sparse matrix, calculate mean per region
-            region_means = np.array(norm_matrix.mean(axis=0)).flatten()
-            # Simple variance approximation for sparse data
-            region_vars = np.array((norm_matrix.power(2).mean(axis=0) - np.square(region_means))).flatten()
-        else:
-            region_means = norm_matrix.mean(axis=0)
-            region_vars = norm_matrix.var(axis=0)
-
-        print(f"  Region means - min: {region_means.min():.6f}, max: {region_means.max():.6f}")
-        print(f"  Region vars - min: {region_vars.min():.6f}, max: {region_vars.max():.6f}")
-
-        # Select top 5000 regions by variance
-        if len(region_vars) > 5000:
-            top_indices = np.argsort(region_vars)[-5000:]
-            variable_regions = [normalized_imputed_acc_obj.region_names[i] for i in top_indices]
-            print(f"  Selected top 5000 variable regions manually")
-        else:
-            variable_regions = normalized_imputed_acc_obj.region_names
-            print(f"  Using all regions as fallback")
-
-        print(f"[INFO] Now using {len(variable_regions)} regions for DAR")
 
     # Find DARs
     print("[INFO] Finding differential accessibility regions (DARs)...")
@@ -238,11 +161,177 @@ def run_dar(cistopic_pickle, output_dir, var_column, scale_factor_impute=1e7,
     # Save marker tables
     for celltype, df in markers_dict.items():
         out_file = os.path.join(output_dir, f"markers_{celltype}.tsv")
-        df.to_csv(out_file, sep="\t")
-        print(f"[INFO] Saved markers for {celltype} -> {out_file}")
+        try:
+            df.to_csv(out_file, sep="\t")
+            print(f"[INFO] Saved markers for {celltype} -> {out_file}")
+        except Exception as e:
+            print(f"[ERROR] Failed to save markers for {celltype}: {e}")
 
     # Attach markers_dict
     cistopic_obj.markers_dict = markers_dict
+
+    # ADD PLOTTING HERE - FIXED VERSION
+    print("\n" + "="*60)
+    print("[INFO] Creating UMAP plots for top DARs...")
+    
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        
+        # Create plot directory
+        plot_dir = os.path.join(output_dir, "umap_plots")
+        os.makedirs(plot_dir, exist_ok=True)
+        print(f"[INFO] Plot directory: {plot_dir}")
+        
+        # Check if UMAP needs to be computed
+        if "cell" not in cistopic_obj.projections or "UMAP" not in cistopic_obj.projections["cell"]:
+            print("[INFO] Computing UMAP for plotting...")
+            
+            try:
+                # Try umap-learn with simplified parameters
+                from umap import UMAP
+                
+                # Get cell_topic and ensure correct orientation
+                cell_topic = cistopic_obj.cell_topic
+                if cell_topic.shape[1] == len(cistopic_obj.cell_names):
+                    cell_topic = cell_topic.T
+                
+                print(f"  Using cell_topic shape: {cell_topic.shape}")
+                print("  Computing UMAP...")
+                
+                # Use Euclidean distance to avoid pynndescent issues
+                umap_model = UMAP(
+                    n_neighbors=15,
+                    min_dist=0.1,
+                    random_state=42,
+                    n_components=2,
+                    metric='euclidean',
+                    n_jobs=1,
+                    verbose=False
+                )
+                
+                umap_embedding = umap_model.fit_transform(cell_topic)
+                
+            except Exception as e:
+                print(f"  UMAP failed ({e}), using PCA instead...")
+                from sklearn.decomposition import PCA
+                
+                cell_topic = cistopic_obj.cell_topic
+                if cell_topic.shape[1] == len(cistopic_obj.cell_names):
+                    cell_topic = cell_topic.T
+                
+                pca = PCA(n_components=2, random_state=42)
+                umap_embedding = pca.fit_transform(cell_topic)
+                print(f"  Using PCA (explained variance: {pca.explained_variance_ratio_})")
+            
+            # Add to projections
+            if "cell" not in cistopic_obj.projections:
+                cistopic_obj.projections["cell"] = {}
+            
+            cistopic_obj.projections["cell"]["UMAP"] = pd.DataFrame(
+                umap_embedding,
+                columns=["UMAP_1", "UMAP_2"],
+                index=cistopic_obj.cell_names[:cell_topic.shape[0]]
+            )
+            print("[INFO] Embedding computed successfully")
+        
+        # Get UMAP coordinates
+        umap_df = cistopic_obj.projections["cell"]["UMAP"]
+        x = umap_df["UMAP_1"].values
+        y = umap_df["UMAP_2"].values
+        
+        # Get region names from the cistopic object, not imputed_acc_obj
+        region_names = cistopic_obj.region_names
+        
+        # Plot top DAR for each group
+        plotted = 0
+        for group, df in markers_dict.items():
+            if df.shape[0] == 0:
+                continue
+            
+            top_dar = df.index.tolist()[0]
+            safe_dar = str(top_dar).replace(':', '_').replace('/', '_').replace('\\', '_')
+            safe_group = group.replace(' ', '_')
+            out_png = os.path.join(plot_dir, f"UMAP_{safe_group}_{safe_dar}.png")
+            
+            print(f"  Plotting top DAR for '{group}': {top_dar}")
+            
+            try:
+                # Find region index in region_names
+                if top_dar not in region_names:
+                    print(f"    [ERROR] Region {top_dar} not found in region_names")
+                    continue
+                
+                idx = list(region_names).index(top_dar)
+                
+                # Get accessibility values from imputed data
+                # Try different ways to access the imputed matrix
+                imputed_matrix = None
+                
+                # Method 1: Check if it has .mtx attribute
+                if hasattr(imputed_acc_obj, 'mtx'):
+                    imputed_matrix = imputed_acc_obj.mtx
+                # Method 2: Check if it's the matrix itself
+                elif hasattr(imputed_acc_obj, 'shape'):
+                    imputed_matrix = imputed_acc_obj
+                # Method 3: Try to access as DataFrame
+                elif hasattr(imputed_acc_obj, 'columns') and hasattr(imputed_acc_obj, 'iloc'):
+                    imputed_matrix = imputed_acc_obj
+                else:
+                    print(f"    [ERROR] Cannot access imputed data structure")
+                    continue
+                
+                # Extract accessibility values
+                if sp.issparse(imputed_matrix):
+                    if imputed_matrix.shape[1] > idx:
+                        acc_values = imputed_matrix[:, idx].toarray().flatten()
+                    else:
+                        print(f"    [ERROR] Index {idx} out of bounds for matrix shape {imputed_matrix.shape}")
+                        continue
+                elif hasattr(imputed_matrix, 'iloc'):  # DataFrame
+                    if idx < len(imputed_matrix.columns):
+                        acc_values = imputed_matrix.iloc[:, idx].values
+                    else:
+                        print(f"    [ERROR] Index {idx} out of bounds for DataFrame")
+                        continue
+                elif hasattr(imputed_matrix, 'shape'):  # numpy array
+                    if imputed_matrix.shape[1] > idx:
+                        acc_values = imputed_matrix[:, idx]
+                    else:
+                        print(f"    [ERROR] Index {idx} out of bounds for array")
+                        continue
+                else:
+                    print(f"    [ERROR] Unknown imputed data type: {type(imputed_matrix)}")
+                    continue
+                
+                # Create plot
+                fig, ax = plt.subplots(figsize=(10, 8))
+                scatter = ax.scatter(x, y, c=acc_values, cmap='viridis', s=5, alpha=0.7, edgecolors='none')
+                plt.colorbar(scatter, ax=ax, label='Imputed Accessibility')
+                ax.set_xlabel('UMAP 1')
+                ax.set_ylabel('UMAP 2')
+                ax.set_title(f"Top DAR for {group}\n{top_dar}", fontsize=14)
+                plt.tight_layout()
+                plt.savefig(out_png, dpi=300, bbox_inches='tight')
+                plt.close(fig)
+                
+                plotted += 1
+                print(f"    ✓ Saved to {out_png}")
+                
+            except Exception as e:
+                print(f"    [ERROR] Failed to plot: {e}")
+        
+        print(f"[INFO] Successfully plotted {plotted} out of {len(markers_dict)} DARs")
+        
+    except ImportError as e:
+        print(f"[WARNING] Could not import plotting dependencies: {e}")
+        print("[INFO] Skipping plotting...")
+    except Exception as e:
+        print(f"[WARNING] Plotting failed: {e}")
+        print("[INFO] Continuing without plots...")
+    
+    print("="*60)
 
     # FIX: Convert ModelObject back to dict before saving for pickle compatibility
     if hasattr(cistopic_obj, 'selected_model') and isinstance(cistopic_obj.selected_model, ModelObject):

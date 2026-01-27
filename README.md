@@ -252,7 +252,27 @@ The gene activity score depends on how open **these linked regions** are in a gi
 
 **Intuition:** a gene is more likely to be expressed if the chromatin around it and its linked regulatory regions is accessible, which is why gene activity scores are gene-specific.
 
-
+##### Running 
+```
+ python src/gene_activity.py         -i scenicOuts/DARs/cistopic_obj_with_DARs.pkl         -a neurog2_gene_annotation.bed         -c neurog2.chrom.sizes         -o scenicOuts/gene_activity
+     
+/nfs/turbo/umms-thahoang/sherine/miniconda/envs/myScenicP/lib/python3.11/site-packages/pyranges/__init__.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+[INFO] Loading cistopic object...
+[INFO] Loading chromosome sizes...
+[INFO] Loading annotation...
+[INFO] Processing 32287 genes
+[INFO] Imputed accessibility shape: (194355, 21026)
+[INFO] Computing gene activity scores (without Gini weights for speed)...
+2025-12-24 10:45:28,444 cisTopic     INFO     Calculating gene boundaries
+join: Strand data from other will be added as strand data to self.
+If this is undesired use the flag apply_strand_suffix=False.
+To turn off the warning set apply_strand_suffix to True or False.
+2025-12-24 10:45:31,488 cisTopic     INFO     Calculating distances
+2025-12-24 10:45:49,755 cisTopic     INFO     Calculating distance weigths
+2025-12-24 10:45:50,467 cisTopic     INFO     Distance weights done
+2025-12-24 10:45:50,789 cisTopic     INFO     Getting gene activity scores
+``` 
 
 # Differential gene activity 
 
@@ -262,4 +282,41 @@ Differential gene activity identifies genes whose activity differs **between gro
 For each gene, it tests whether the activity scores are significantly different between groups. This is still **based on chromatin accessibility**: genes are differentially active because the accessibility of their linked regulatory regions varies between groups. A gene whose regulatory regions are more open in one group than another will have a higher activity score in that group, making it a **differentially active gene**.  
 
 **Intuition:** differential gene activity highlights genes whose regulatory potential changes across conditions, revealing which genes are likely “turned on” in one group of cells compared to another.
+
+## Gene Activity 
+
+
+We used `src/gene_activity.py` for this step. This step converts single-cell ATAC-seq peak accessibility into a **gene-by-cell matrix** by linking co-accessible regions to nearby genes.
+
+Instead of keeping accessibility at the level of peaks, accessibility from regions located near each gene is summarized and assigned to that gene. The result is a matrix where each value represents the amount of chromatin accessibility associated with a given gene in a given cell.
+
+No gene expression is computed here.  
+This step only reports **accessibility linked to genes**, based on genomic proximity and co-accessible regions.
+
+Each entry contains the summed accessibility signal from regions linked to that gene for each cell.
+
+---
+
+## Example Output
+
+| Gene   | Cell_1 | Cell_2 | Cell_3 |
+|--------|--------|--------|--------|
+| Sox9   | 2.3    | 0.1    | 4.5    |
+| Runx2 | 0.0    | 1.8    | 0.2    |
+| Klf4   | 3.1    | 2.9    | 0.0    |
+
+Where:
+
+- Rows = genes  
+- Columns = cells  
+- Values = chromatin accessibility linked to each gene  
+
+---
+
+## Files Produced
+
+- `gene_activity.tsv` — gene-by-cell accessibility matrix .. This is approximately 13 GB file
+- `gene_activity_obj.pkl` — serialized object for downstream SCENIC+ steps  
+- `gene_activity_weights.pkl` — region-to-gene linking weights  
+
 
