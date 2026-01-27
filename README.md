@@ -320,3 +320,40 @@ Where:
 - `gene_activity_weights.pkl` — region-to-gene linking weights  
 
 
+
+## Differential Gene Activity Analysis
+
+We performed differential gene activity analysis using **`src/differential_gene_activity.py`**.  
+
+## What the analysis does (conceptually)
+
+- This step works **after gene activity has been summarized** from chromatin accessibility.  
+- It **compares cells of different types** to find genes that have **differential accessibility in regions near the gene** (i.e., genes whose nearby chromatin is more or less open in one cell type vs another).  
+- The output identifies **DAGs (Differentially Accessible Genes)** for each cell type, based on specified thresholds for statistical significance (`adjusted p-value`) and effect size (`log2 fold change`).  
+- In short: it tells you **which genes are likely to be differently regulated at the chromatin level between cell types**.
+
+## Outputs
+
+The script produces two main files:
+
+1. **`DAG_markers.pkl`** – a Python pickle containing a dictionary of cell types and the list of DAGs for each.  
+2. **`DAG_markers_summary.tsv`** – a human-readable summary table of DAG counts per cell type.
+
+### DAG summary table
+
+| Cell_type | Number_of_DAGs | DAG_genes                     |
+|-----------|----------------|-------------------------------|
+| AC        | 105            | Log2FC,Adjusted_pval,Contrast |
+| BC        | 105            | Log2FC,Adjusted_pval,Contrast |
+| Cones     | 63             | Log2FC,Adjusted_pval,Contrast |
+| MG        | 82             | Log2FC,Adjusted_pval,Contrast |
+| MGPC      | 0              | Log2FC,Adjusted_pval,Contrast |
+| Microglia | 45             | Log2FC,Adjusted_pval,Contrast |
+| Rod       | 63             | Log2FC,Adjusted_pval,Contrast |
+
+> **Note:** These numbers represent how many genes were identified as differentially accessible near the gene for each cell type.  
+> Higher numbers indicate more distinct chromatin differences for that cell type; zero indicates no genes passed the statistical thresholds.
+
+---
+
+
