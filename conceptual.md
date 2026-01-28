@@ -192,12 +192,6 @@ Example input matrix:
 
 ## 11. Cluster Cistopic 
 
-Here’s your latest explanation written neatly in **Markdown** format:
-
----
-
-## How the Cluster Cistopic Script Works
-
 ### 1️⃣ Input
 
 * **Cell-topic matrix:** fraction of each cell's accessibility explained by topics.
@@ -219,7 +213,7 @@ Here’s your latest explanation written neatly in **Markdown** format:
 
 ---
 
-### 2️⃣ What is beingg clustered
+### 2️⃣ What is being clustered
 
 * The script clusters **cells**, not individual peaks.
 
@@ -234,48 +228,46 @@ Here’s your latest explanation written neatly in **Markdown** format:
 
 ### 3️⃣ Calculating similarity
 
-* A **distance or similarity metric** (e.g., Euclidean distance or cosine similarity) is computed between cells based on their topic vectors.
+* A **graph-based neighborhood structure** is computed between cells based on their topic vectors.
 
-**Example (Euclidean distance):**
+* Cells with similar topic fractions are connected in this graph.
 
-* Distance between `cell_001` `[0.08, 0.06, 0.86]` and `cell_101` `[0.12, 0.04, 0.84]` → small → similar cells.
-* Distance between `cell_001` `[0.08, 0.06, 0.86]` and `cell_102` `[0.70, 0.10, 0.20]` → large → very different cells.
+  * Cells with similar regulatory programs (topic usage) are close in the graph.
+  * Cells with different topic usage are far apart.
 
 ---
 
 ### 4️⃣ Clustering method
 
-* After computing distances, a clustering algorithm groups cells with similar topic distributions:
-
-  * **Hierarchical clustering** → builds a tree and cuts it into clusters.
-  * **K-means** → assigns cells to `k` clusters based on vectors.
-  * **Graph-based clustering (Louvain/Leiden)** → builds a neighbor graph and detects communities.
-
-* Result: cells with similar regulatory landscapes are grouped together.
+* Cells are grouped using **Leiden clustering**, a graph-based community detection method.
+* Multiple **resolutions** are used (e.g., 0.6, 1.2, 3) to generate coarser or finer clusters.
+* Result: cells with similar regulatory landscapes are grouped together, reflecting shared co-accessible programs.
 
 ---
 
-### 5️⃣ Role of peaks/topics
+### 5️⃣ UMAP embedding
+
+* Cells are projected into **2D UMAP space** for visualization.
+* Clusters are plotted in this space, allowing interpretation of relationships between regulatory programs.
+
+---
+
+### 6️⃣ Role of peaks/topics
 
 * Peaks are **not directly clustered**, but they influence clusters indirectly:
 
   * Topics are weighted sets of peaks.
   * Cells that share topic usage are grouped together.
-  * Therefore, clusters reflect **co-accessibility patterns in peaks**, summarized by topics.
+  * Therefore, clusters reflect **patterns of co-accessibility in peaks**, summarized by topics.
 
 ---
 
-### 🔑 TL;DR
+### 7️⃣ Cell type annotation
 
-1. Each cell → vector of topic fractions.
-2. Compute similarity/distance between cells.
-3. Apply clustering algorithm.
-4. Cells with similar topic distributions → same cluster.
-5. Peaks influence clusters indirectly via topics.
+* If the `cell_data` contains a `celltype` column, clusters are annotated with **dominant cell types**.
+* This helps interpret which regulatory programs correspond to which biological populations.
 
 ---
-
-
 
 
 
