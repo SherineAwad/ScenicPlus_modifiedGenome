@@ -194,4 +194,92 @@ Example input matrix:
 
 ---
 
+## 11. Cluster Cistopic 
+
+Here’s your latest explanation written neatly in **Markdown** format:
+
+---
+
+## How the Cluster Cistopic Script Works
+
+### 1️⃣ Input
+
+* **Cell-topic matrix:** fraction of each cell's accessibility explained by topics.
+
+| Cell     | Topic1 | Topic2 | Topic3 |
+| -------- | ------ | ------ | ------ |
+| cell_001 | 0.08   | 0.06   | 0.86   |
+| cell_002 | 0.05   | 0.90   | 0.05   |
+| cell_101 | 0.12   | 0.04   | 0.84   |
+| cell_102 | 0.70   | 0.10   | 0.20   |
+
+* **Topic-region matrix:** which peaks contribute to each topic.
+
+| Topic  | Peak1 | Peak2 | Peak3 | Peak4 | Peak5 | Peak6 |
+| ------ | ----- | ----- | ----- | ----- | ----- | ----- |
+| Topic1 | 0.10  | 0.40  | 0.30  | 0.20  | 0.0   | 0.0   |
+| Topic2 | 0.05  | 0.80  | 0.10  | 0.05  | 0.0   | 0.0   |
+| Topic3 | 0.25  | 0.05  | 0.35  | 0.35  | 0.3   | 0.2   |
+
+---
+
+### 2️⃣ What is beingg clustered
+
+* The script clusters **cells**, not individual peaks.
+
+* Each cell is represented by a **vector of topic fractions**, e.g.:
+
+  * `cell_001` → `[0.08, 0.06, 0.86]`
+  * `cell_002` → `[0.05, 0.90, 0.05]`
+
+* This vector summarizes the cell's **regulatory landscape** in terms of co-accessible topics.
+
+---
+
+### 3️⃣ Calculating similarity
+
+* A **distance or similarity metric** (e.g., Euclidean distance or cosine similarity) is computed between cells based on their topic vectors.
+
+**Example (Euclidean distance):**
+
+* Distance between `cell_001` `[0.08, 0.06, 0.86]` and `cell_101` `[0.12, 0.04, 0.84]` → small → similar cells.
+* Distance between `cell_001` `[0.08, 0.06, 0.86]` and `cell_102` `[0.70, 0.10, 0.20]` → large → very different cells.
+
+---
+
+### 4️⃣ Clustering method
+
+* After computing distances, a clustering algorithm groups cells with similar topic distributions:
+
+  * **Hierarchical clustering** → builds a tree and cuts it into clusters.
+  * **K-means** → assigns cells to `k` clusters based on vectors.
+  * **Graph-based clustering (Louvain/Leiden)** → builds a neighbor graph and detects communities.
+
+* Result: cells with similar regulatory landscapes are grouped together.
+
+---
+
+### 5️⃣ Role of peaks/topics
+
+* Peaks are **not directly clustered**, but they influence clusters indirectly:
+
+  * Topics are weighted sets of peaks.
+  * Cells that share topic usage are grouped together.
+  * Therefore, clusters reflect **co-accessibility patterns in peaks**, summarized by topics.
+
+---
+
+### 🔑 TL;DR
+
+1. Each cell → vector of topic fractions.
+2. Compute similarity/distance between cells.
+3. Apply clustering algorithm.
+4. Cells with similar topic distributions → same cluster.
+5. Peaks influence clusters indirectly via topics.
+
+---
+
+
+
+
 
