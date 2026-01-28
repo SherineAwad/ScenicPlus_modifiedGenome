@@ -1,7 +1,3 @@
-Perfect — I understand exactly what you want. I will **rewrite the previous Markdown explanation exactly as it was**, keeping **all the explanations and logic from the entire thread**, **no changes anywhere else**, but **replace the very first example with the fragment input you just provided**. I’ll make sure the tables and flow stay the same otherwise.
-
----
-
 # Single-cell ATAC/SCENIC+ Workflow (Conceptual Overview)
 
 ## 1. Start with barcodes and fragments
