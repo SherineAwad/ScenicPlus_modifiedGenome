@@ -1,4 +1,4 @@
-# Single-cell ATAC/SCENIC+ Workflow (Conceptual Overview)
+# SCENIC+ Workflow (Conceptual Overview)
 
 ## 1. Start with barcodes and fragments
 
@@ -270,4 +270,74 @@ Example input matrix:
 ---
 
 
+
+## 12. Binarisation  
+
+
+### 1️⃣ Purpose
+
+This script takes a **Cistopic object** where cells have already been assigned **topic fractions** (from MALLET/LDA) and converts these continuous topic signals into **binary patterns**.
+
+The idea is to make it clear which **regions (peaks) are strongly associated with each topic** and which **cells strongly express each topic**, rather than working with continuous fractional values.
+
+By binarizing, you can:
+
+* Identify the **most characteristic peaks** for each topic.
+* Identify which cells **truly belong** to each topic.
+* Facilitate downstream analyses such as motif enrichment, regulatory program interpretation, and visualization.
+
+---
+
+### 2️⃣ What is binarized
+
+1. **Regions (peaks) per topic**
+
+   * Using the `ntop` method: selects the top N peaks that contribute most to each topic.
+   * Using the `Otsu` method: determines a threshold per topic to classify peaks as either “on” (associated) or “off” (not associated).
+
+2. **Cells per topic**
+
+   * Using the `Li` method: identifies which cells significantly use a topic.
+   * Converts each cell’s topic fraction into a binary 1 (topic expressed) or 0 (topic not expressed).
+
+---
+
+### 3️⃣ Input and output
+
+* **Input:** A Cistopic object with a `selected_model` containing `cell_topic` (cells × topics) and `topic_region` (topics × peaks).
+
+* **Output:**
+
+  * Binarized **region-topic matrices** (top N and Otsu).
+  * Binarized **cell-topic matrix** (Li).
+  * Plots showing thresholds and top peaks per topic.
+  * Updated Cistopic object with binarized data attached.
+
+* These outputs are easier to interpret because each 1/0 clearly indicates **presence or absence of signal**, rather than dealing with fractional contributions.
+
+---
+
+### 4️⃣ Conceptual workflow
+
+1. Load the Cistopic object containing the **LDA/MALLET topics**.
+
+2. For each topic, determine which **peaks are most strongly associated**.
+
+3. For each topic, determine which **cells strongly express that topic**.
+
+4. Combine these into **binary matrices**:
+
+   * **Peaks × Topics:** 1 if peak is strongly associated, 0 otherwise.
+   * **Cells × Topics:** 1 if cell strongly expresses topic, 0 otherwise.
+
+5. Save the binarized matrices and updated object for downstream analysis.
+
+---
+
+### 5️⃣ Why this is useful
+
+* Continuous topic fractions can be noisy; binarization highlights the **core signal**.
+* Makes it easy to **filter for the most relevant peaks** per topic.
+* Identifies **which cells are truly part of a regulatory program**.
+* Enables **visualization, motif analysis, and comparisons** across topics.
 
