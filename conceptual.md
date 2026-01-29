@@ -363,7 +363,7 @@ DAR analysis identifies **peaks (regions) that are differentially accessible bet
 
 ---
 
-## DAR analysis (Differential Accessible Regions)
+## 13. DAR analysis (Differential Accessible Regions)
 
 1. **Input**
 
@@ -372,7 +372,9 @@ The DAR analysis takes a **binarized or topic-processed Cistopic object**, which
 * **Cells × topics:** each cell’s representation in topic space (fractional usage of regulatory programs).
 * **Regions × topics:** how peaks contribute to each topic.
 * **Metadata:** cell annotations like `celltype` or other groups to compare.
-* **Fragment/accessibility matrix:** single-cell peak accessibility information, often imputed and normalized from previous steps.
+* **Fragment/accessibility matrix:** single-cell peak accessibility information, often **imputed and normalized** from previous steps.
+
+> **Imputation explanation:** Single-cell ATAC data is sparse, meaning many peaks are not detected in every cell. Imputation estimates these missing accessibility values using information from similar cells or topics, producing a more complete and robust accessibility profile for downstream comparison.
 
 This input is usually the output of the **binarization step**, so the signal has been simplified to highlight the most relevant regions per topic and per cell.
 
@@ -381,7 +383,7 @@ This input is usually the output of the **binarization step**, so the signal has
 2. **What the DAR analysis does conceptually**
 
 * The main goal is to find **Differentially Accessible Regions (DARs)** — peaks that are significantly more or less accessible between groups of cells (e.g., cell types, clusters, or experimental conditions).
-* To do this, the script first **imputes missing accessibility signals** and **normalizes** them so that comparisons across cells are meaningful.
+* To do this, the script first **performs imputation**, which fills in the missing accessibility measurements for peaks not detected in some cells. This ensures that comparisons between cells or groups are **more accurate and less affected by dropouts** in the single-cell data. After imputation, the accessibility values are **normalized** so that differences reflect true biological variation rather than technical bias.
 * Then, it identifies **highly variable regions**, which are the peaks that vary the most across all cells, because these are most informative for distinguishing groups.
 * Using these variable regions, the script compares groups of cells according to the chosen metadata column (e.g., `celltype`) and calculates which peaks are **significantly different in accessibility**.
 
@@ -393,14 +395,45 @@ This input is usually the output of the **binarization step**, so the signal has
 * The script also optionally produces **UMAP plots** showing how the accessibility of top DARs varies across cells in the embedding space, which helps **visualize regulatory differences across populations**.
 * The DARs are **stored in the Cistopic object** so that they can be used for further analyses, like **linking regulatory regions to gene activity**, motif enrichment, or integration with transcriptomics.
 
+> **Imputation relevance:** All these outputs rely on imputed data to ensure that the statistical testing of accessibility differences is **not biased by missing values**. Without imputation, many real differences could be missed because peaks were not observed in enough cells.
+
 ---
 
 * **MALLET/LDA → Binarization → DAR Analysis**
 
 1. MALLET/LDA identifies **topics** that summarize co-accessible regions.
 2. Binarization converts these topics into **discrete signals**, highlighting defining peaks.
-3. DAR analysis uses these binarized or imputed signals to **statistically test which peaks differ between groups**, giving biologically meaningful regulatory insights.
+3. DAR analysis uses these **imputed and binarized signals** to **statistically test which peaks differ between groups**, giving biologically meaningful regulatory insights.
+
+> **Imputation note:** This highlights that the DAR step doesn’t just use the raw binarized matrix — it first fills in missing values to provide a **full accessibility landscape** for each cell, improving sensitivity and robustness of DAR detection.
 
 ---
+## 14. Export Region 
+
+
+The goal of this step is to **take the topics and differentially accessible regions identified in previous analyses and convert them into standard BED files** with genomic coordinates. This makes the regulatory regions discovered in single-cell chromatin accessibility analyses **portable, interpretable, and ready for downstream use**, such as visualization in genome browsers, motif analysis, or integration with other genomic datasets.
+
+
+
+## 15. Gene Activity 
+
+
+**Goal:** The gene activity step estimates **gene-level regulatory potential** in each cell based on **chromatin accessibility**, not gene expression. It assigns accessible peaks to nearby genes and summarizes the accessibility signal to produce a **gene activity score**, purely derived from the DNA accessibility data.
+
+**Conceptually:**
+
+* Each gene has regulatory regions (promoters, enhancers) located upstream, downstream, or within the gene body. The more accessible these regions are in a cell, the higher the **gene’s activity score by proximity**.
+* The script uses the **imputed accessibility matrix** from the DAR step, ensuring that sparsely detected peaks are accounted for and comparisons across cells are meaningful.
+* Gene activity is calculated by **aggregating the accessibility of peaks that are near a gene**, optionally weighting by distance or region importance.
+* The output is a **cell × gene matrix**, where each value reflects the **chromatin accessibility near a gene**, not RNA abundance. This matrix can be used for:
+
+  * Comparing **regulatory potential across cell types**.
+  * **Integration with RNA data** if desired, but the scores themselves are **independent of expression**.
+  * Visualizing how accessible regulatory regions relate to genes on embeddings like UMAP.
+
+> In short, this step **translates single-cell accessibility into a proximity-based gene activity score**, providing a measure of potential regulatory influence on each gene per cell, without measuring actual transcription.
+
+---
+
 
 
