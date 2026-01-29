@@ -436,4 +436,30 @@ The goal of this step is to **take the topics and differentially accessible regi
 ---
 
 
+## 16. Differential Gene Activity (DAG) Analysis
+
+**Goal:** This step identifies **genes whose regulatory regions show differential accessibility between groups of cells**, using the **gene activity scores derived by proximity to peaks**, not actual RNA expression. Essentially, it tests which genes have **more or less accessible chromatin in different cell types or conditions**, based on the chromatin accessibility data.
+
+**Conceptually:**
+
+* Each gene’s activity is already summarized from nearby accessible regions (promoters, enhancers, gene body).
+* The differential analysis compares **groups of cells** (e.g., cell types) to find **Differentially Active Genes (DAGs)** — genes whose nearby chromatin is **significantly more or less accessible** in one group versus another.
+* The method uses **statistical testing**, adjusting for multiple comparisons (adjusted p-values) and effect size thresholds (log2 fold change), to ensure only meaningful differences are called.
+* The analysis can handle **sparse or dense gene activity matrices**, subsets of cells, and multiple groups in parallel.
+
+**Outputs:**
+
+* **DAG_markers.pkl:** a dictionary where each key is a cell type (or group), and the value is a list of genes identified as DAGs for that group.
+* **DAG_markers_summary.tsv:** a table summarizing the results for each group, including:
+
+  * `Cell_type`: the group name.
+  * `Number_of_DAGs`: how many genes were called as differential.
+  * `DAG_genes`: comma-separated list of gene names.
+* These outputs allow **downstream analyses**, like linking differential regulatory potential to pathways, integrating with expression data, or visualizing gene activity differences across UMAP embeddings.
+
+> In short, this step **translates proximity-based gene activity into cell type–specific regulatory signatures**, highlighting which genes have differential chromatin accessibility across groups.
+
+---
+
+
 
