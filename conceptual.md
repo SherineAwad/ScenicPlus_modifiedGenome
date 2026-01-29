@@ -332,12 +332,75 @@ By binarizing, you can:
 
 5. Save the binarized matrices and updated object for downstream analysis.
 
+
+## How Binarization Connects to DAR Analysis
+
+1. **What DAR analysis does**
+
+DAR analysis identifies **peaks (regions) that are differentially accessible between groups of cells**, e.g., different cell types or clusters. This tells us which regulatory regions are specifically “active” in one cell population versus another.
+
 ---
 
-### 5️⃣ Why this is useful
+2. **Why binarization is important for DAR**
 
-* Continuous topic fractions can be noisy; binarization highlights the **core signal**.
-* Makes it easy to **filter for the most relevant peaks** per topic.
-* Identifies **which cells are truly part of a regulatory program**.
-* Enables **visualization, motif analysis, and comparisons** across topics.
+* After MALLET/LDA, each peak has a **topic weight**, and each cell has a **topic fraction**. These are **continuous values**, which can be noisy.
+
+* Binarization converts these continuous signals into **0/1** matrices:
+
+  * **Region-topic binary matrix:** which peaks are strongly associated with which topics.
+  * **Cell-topic binary matrix:** which cells strongly express which topics.
+
+* By doing this, we can **filter out weak signals** and focus only on the **core regions or cells** that truly represent a topic.
+
+---
+
+3. **Practical intuition**
+
+* Imagine a topic represents a regulatory program.
+* Binarization picks the **defining peaks** of that program.
+* DAR analysis then asks: *“Which of these defining peaks are more accessible in cluster A vs cluster B?”*
+* This allows you to **link topics to cell type–specific regulatory regions**.
+
+---
+
+## DAR analysis (Differential Accessible Regions)
+
+1. **Input**
+
+The DAR analysis takes a **binarized or topic-processed Cistopic object**, which contains:
+
+* **Cells × topics:** each cell’s representation in topic space (fractional usage of regulatory programs).
+* **Regions × topics:** how peaks contribute to each topic.
+* **Metadata:** cell annotations like `celltype` or other groups to compare.
+* **Fragment/accessibility matrix:** single-cell peak accessibility information, often imputed and normalized from previous steps.
+
+This input is usually the output of the **binarization step**, so the signal has been simplified to highlight the most relevant regions per topic and per cell.
+
+---
+
+2. **What the DAR analysis does conceptually**
+
+* The main goal is to find **Differentially Accessible Regions (DARs)** — peaks that are significantly more or less accessible between groups of cells (e.g., cell types, clusters, or experimental conditions).
+* To do this, the script first **imputes missing accessibility signals** and **normalizes** them so that comparisons across cells are meaningful.
+* Then, it identifies **highly variable regions**, which are the peaks that vary the most across all cells, because these are most informative for distinguishing groups.
+* Using these variable regions, the script compares groups of cells according to the chosen metadata column (e.g., `celltype`) and calculates which peaks are **significantly different in accessibility**.
+
+---
+
+4. **Output and downstream use**
+
+* The result is a set of **DAR tables** for each group, listing peaks with adjusted p-values and fold changes. These tables represent **cell type–specific or cluster-specific regulatory regions**.
+* The script also optionally produces **UMAP plots** showing how the accessibility of top DARs varies across cells in the embedding space, which helps **visualize regulatory differences across populations**.
+* The DARs are **stored in the Cistopic object** so that they can be used for further analyses, like **linking regulatory regions to gene activity**, motif enrichment, or integration with transcriptomics.
+
+---
+
+* **MALLET/LDA → Binarization → DAR Analysis**
+
+1. MALLET/LDA identifies **topics** that summarize co-accessible regions.
+2. Binarization converts these topics into **discrete signals**, highlighting defining peaks.
+3. DAR analysis uses these binarized or imputed signals to **statistically test which peaks differ between groups**, giving biologically meaningful regulatory insights.
+
+---
+
 
